@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ciber-Tabuleiro Pro</title>
+    <title>Neon Gridlock - F00XGAMES Pro</title>
     <style>
-        :root { --main-color: #00ffff; --bg-dark: #02111a; }
+        :root { 
+            --main-color: #00ffff; 
+            --cyan-glow: rgba(0, 255, 255, 0.8);
+            --bg-dark: #02111a; 
+            --glass-bg: rgba(0, 40, 60, 0.4);
+        }
+        
         body {
             background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
@@ -13,107 +19,83 @@
             justify-content: center; transition: background 1s ease;
         }
 
+        /* EFEITO FLASH NO TABULEIRO */
         body.flash { animation: screenFlash 0.15s; }
-        @keyframes screenFlash {
-            0% { background: #ffffff; }
-            100% { background: var(--bg-dark); }
-        }
+        @keyframes screenFlash { 0% { background: #004444; } 100% { background: var(--bg-dark); } }
 
         #game-container {
             display: flex; flex-direction: column;
-            background-color: rgba(220, 220, 220, 0.1);
-            border-radius: 15px; padding: 10px;
-            width: 100%; max-width: 360px;
-            margin: 0 auto; box-sizing: border-box;
+            background-color: var(--glass-bg); backdrop-filter: blur(5px);
+            border-radius: 20px; padding: 15px; border: 1px solid rgba(0,255,255,0.1);
+            width: 95%; max-width: 360px; box-sizing: border-box;
         }
 
-    .game-canvas {
-            width: 320px; height: 320px;
-            margin-left: auto; margin-right: auto; display: block;
-            background: rgba(0,0,0,0.5); border: 2px solid #333;
-            border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        .game-canvas {
+            width: 310px; height: 310px; margin: 0 auto; display: block;
+            background: rgba(0,0,0,0.6); border: 2px solid #333;
+            border-radius: 12px; box-shadow: 0 0 25px rgba(0,0,0,0.7);
         }
 
-        #ui-container { margin: 10px 0; text-align: center; width: 100%; z-index: 10; }
-    .score-panel {
-            background: rgba(0, 40, 60, 0.4); backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px;
-            padding: 10px; margin: 5px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
-        }
-    .stats-row { display: flex; justify-content: center; gap: 20px; }
-    .stat-val { color: var(--main-color); font-weight: bold; font-size: 18px; }
+        #ui-container { margin-bottom: 10px; text-align: center; }
+        .score-panel { padding: 5px; }
+        .stats-row { display: flex; justify-content: center; gap: 25px; }
+        .stat-val { color: var(--main-color); font-weight: bold; font-size: 22px; text-shadow: 0 0 10px var(--main-color); }
 
-    .pieces-selector { display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; justify-content: center; }
-    .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
-    .disabled { opacity: 0.2; filter: grayscale(1); }
+        /* MARCA F00XGAMES NEON */
+        .neon-brand {
+            font-size: 18px; font-weight: bold; color: #fff; text-transform: uppercase;
+            letter-spacing: 4px; text-shadow: 0 0 5px #fff, 0 0 15px var(--main-color);
+            margin: 15px 0; animation: brandPulse 2s infinite alternate;
+        }
+        @keyframes brandPulse { 
+            from { opacity: 0.6; transform: scale(0.95); } 
+            to { opacity: 1; transform: scale(1); text-shadow: 0 0 10px #fff, 0 0 25px var(--main-color); } 
+        }
+
+        .pieces-selector { 
+            display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.4); 
+            padding: 12px; border-radius: 18px; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .slot { width: 85px; height: 85px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
+        .disabled { opacity: 0.15; filter: grayscale(1) brightness(0.5); }
 
         #start-screen, #game-over {
-            position: fixed; inset: 0; background: rgba(2, 17, 26, 0.95);
+            position: fixed; inset: 0; background: radial-gradient(circle, #0a2a3a 0%, #02111a 100%);
             z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden;
         }
 
-        #falling-blocks {
-            position: absolute; inset: 0; z-index: 0;
-            pointer-events: none;
-        }
-     .falling-block {
-            position: absolute; width: 40px; height: 40px;
-            opacity: 0.3; animation: fall linear infinite;
-        }
-        @keyframes fall {
-            0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.3; }
-            90% { opacity: 0.3; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
-
-        #start-content {
-            position: relative; z-index: 1; text-align: center;
-        }
-
-    .btn {
+        .btn {
             background: linear-gradient(45deg, #00ffff, #0080ff); color: #000;
-            border: none; padding: 15px 40px; font-size: 18px; font-weight: bold;
-            border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,255,255,0.4);
+            border: none; padding: 16px 45px; font-size: 20px; font-weight: bold;
+            border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,255,0.5);
+            text-transform: uppercase;
         }
 
         #level-complete {
-            position: fixed; inset: 0; z-index: 999;
-            display: none; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-        }
-        #level-complete-text {
-            font-size: 32px; font-weight: bold; color: var(--main-color);
-            text-shadow: 0 0 20px var(--main-color);
-            animation: popIn 0.5s ease-out;
-        }
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            position: fixed; inset: 0; z-index: 999; display: none; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
         }
     </style>
 </head>
 <body>
 
 <div id="start-screen">
-    <div id="falling-blocks"></div>
-    <div id="start-content">
-        <h1 style="color:var(--main-color); letter-spacing:2px; text-shadow: 0 0 20px var(--main-color);">CIBER-TABULEIRO</h1>
-        <p id="menu-best">RECORDE: 0</p>
-        <button class="btn" onclick="initGame()">INICIAR JOGO</button>
-    </div>
+    <h1 style="color:var(--main-color); font-size: 38px; text-shadow: 0 0 20px var(--main-color); margin-bottom: 5px;">NEON GRIDLOCK</h1>
+    <p id="menu-best" style="margin-bottom: 30px; opacity: 0.8;">RECORDE: 0</p>
+    <button class="btn" onclick="initGame()">INICIAR JOGO</button>
+    <div class="neon-brand">F00XGAMES</div>
 </div>
 
 <div id="game-container">
     <div id="ui-container">
         <div class="score-panel">
-            <div id="info" style="font-size: 12px; opacity: 0.7;">NÍVEL 1</div>
+            <div id="info" style="font-size: 12px; opacity: 0.7; letter-spacing: 2px;">FASE 1</div>
             <div class="stats-row">
-                <div>PONTOS: <span id="score" class="stat-val">0</span></div>
-                <div>RECORDE: <span id="best" class="stat-val">0</span></div>
+                <div>PONTOS <br> <span id="score" class="stat-val">0</span></div>
+                <div>RECORDE <br> <span id="best" class="stat-val" style="color: gold;">0</span></div>
             </div>
-            <div id="mission-bar" style="margin-top: 5px; font-size: 18px;"></div>
+            <div id="mission-bar" style="margin-top: 10px; font-weight: bold;"></div>
         </div>
     </div>
 
@@ -127,55 +109,242 @@
 </div>
 
 <div id="level-complete">
-    <div id="level-complete-text">FASE CONCLUÍDA 1★</div>
+    <div id="level-complete-text" style="font-size: 36px; color: cyan; text-shadow: 0 0 20px cyan;">FASE CONCLUÍDA!</div>
 </div>
 
 <div id="game-over" style="display:none;">
-    <h2 style="color:#ff4444;">FIM DE JOGO</h2>
-    <p id="final-score">Pontuação: 0</p>
-    <button class="btn" onclick="location.reload()">RECOMEÇAR</button>
+    <h2 style="color:#ff4444; font-size: 40px; text-shadow: 0 0 20px red;">FIM DE JOGO</h2>
+    <p id="final-score" style="font-size: 20px;">Pontuação: 0</p>
+    <button class="btn" style="margin-top: 20px;" onclick="location.reload()">RECOMEÇAR</button>
+    <div class="neon-brand">F00XGAMES</div>
 </div>
 
+<script src="cordova.js"></script>
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const size = 40;
 
-    const imgBtn = new Image(); imgBtn.src = './assets/bloco.png';
-    const imgStar = new Image(); imgStar.src = './assets/estrela.png';
-    const imgFire = new Image(); imgFire.src = './assets/fogo.png';
-    const imgThunder = new Image(); imgThunder.src = './assets/raio.png';
+    // Assets - Caminhos fixos para APK
+    const imgBtn = new Image(); imgBtn.src = 'assets/bloco.png';
+    const imgStar = new Image(); imgStar.src = 'assets/estrela.png';
+    const imgFire = new Image(); imgFire.src = 'assets/fogo.png';
+    const imgThunder = new Image(); imgThunder.src = 'assets/raio.png';
     const imgMap = { "⭐": imgStar, "🔥": imgFire, "⚡": imgThunder };
-
-    [imgBtn, imgStar, imgFire, imgThunder].forEach(img => {
-        img.onload = () => { renderUI(); };
-    });
 
     let grid = Array(8).fill().map(() => Array(8).fill(0));
     let score = 0, level = 1, best = localStorage.getItem('blockBest') || 0;
     let missionGoals = {}, missionCollected = {};
     let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = -1000, mY = -1000;
-    let moved = false, touchT = 0, audioCtx, bgMusicLoop = null;
+    let moved = false, touchT = 0, particles = [], comboTexts = [];
+    let comboCount = 0, comboTimer = 0, shakeIntensity = 0;
 
-    let comboCount = 0, comboTimer = 0;
-    const comboMaxTime = 600;
-    let comboTexts = [];
-    let boardFlashTimer = 0;
-    let flashTimer = 0;
-    let particles = [];
-
-    // CORES DE FUNDO SUTIS POR FASE
-    const levelColors = [
-        '#02111a', '#03121b', '#04131c', '#05141d', '#06151e',
-        '#07161f', '#081720', '#091821', '#0a1922', '#0b1a23'
-    ];
-
-    const icons = { star: "⭐", fire: "🔥", thunder: "⚡" };
     const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
-    const comboPhrases = ["BOM!", "MUITO BOM!", "EXCELENTE!", "INCRÍVEL!", "LENDÁRIO!", "DEUS!", "IMPARÁVEL!"];
+    const comboPhrases = ["BOM!", "ENERGIA!", "TURBO!", "INCRÍVEL!", "LENDÁRIO!", "DEUS!"];
 
     document.getElementById('best').innerText = best;
     document.getElementById('menu-best').innerText = "RECORDE: " + best;
 
-    function createFallingBlocks() {
-        const container = document.getElementById('falling-blocks');
+    function initGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        setupLevel();
+        requestAnimationFrame(loop);
+    }
+
+    function setupLevel() {
+        grid = Array(8).fill().map(() => Array(8).fill(0));
+        missionGoals = { "⭐": 3 + level };
+        if(level >= 3) missionGoals["🔥"] = 2 + level;
+        for (let key in missionGoals) missionCollected[key] = 0;
+        document.getElementById('info').innerText = "FASE " + level;
+        newSet();
+    }
+
+    function drawBlock(x, y, type, alpha = 1) {
+        ctx.globalAlpha = alpha;
+        let img = (typeof type === 'string' && imgMap[type]) ? imgMap[type] : imgBtn;
+        if(img.complete) {
+            ctx.drawImage(img, x, y, size-1, size-1);
+        } else {
+            ctx.fillStyle = "cyan"; ctx.fillRect(x+1, y+1, size-2, size-2);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function newSet() {
+        const types = Object.keys(missionGoals);
+        for(let i=0; i<3; i++) {
+            let p = JSON.parse(JSON.stringify(shapes[Math.floor(Math.random()*shapes.length)]));
+            if(Math.random() < 0.4) {
+                let r = Math.floor(Math.random()*p.length), c = Math.floor(Math.random()*p[0].length);
+                if(p[r][c]) p[r][c] = types[Math.floor(Math.random()*types.length)];
+            }
+            pieces[i] = p;
+        }
+        renderUI();
+    }
+
+    function canPlace(p, r, c) {
+        if (r < 0 || c < 0 || r + p.length > 8 || c + p[0].length > 8) return false;
+        for (let i = 0; i < p.length; i++) 
+            for (let j = 0; j < p[0].length; j++) 
+                if (p[i][j] && grid[r+i][c+j] !== 0) return false;
+        return true;
+    }
+
+    function canFitAnywhere(p) {
+        if(!p) return true;
+        for (let r = 0; r <= 8 - p.length; r++)
+            for (let c = 0; c <= 8 - p[0].length; c++)
+                if (canPlace(p, r, c)) return true;
+        return false;
+    }
+
+    function checkLines() {
+        let rd = [], cd = [];
+        for(let r=0; r<8; r++) if(grid[r].every(v => v !== 0)) rd.push(r);
+        for(let c=0; c<8; c++) { let full = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) full = false; if(full) cd.push(c); }
+        
+        if(rd.length || cd.length) {
+            comboCount++; comboTimer = 100;
+            if(navigator.vibrate) navigator.vibrate([50, 30, 50]); // Vibração Pro
+            
+            let phrase = comboPhrases[Math.min(comboCount-1, comboPhrases.length-1)];
+            comboTexts.push({text: phrase, x: 160, y: 160, life: 1});
+            shakeIntensity = 10;
+            
+            rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
+            cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
+            
+            score += (rd.length + cd.length) * 10 * comboCount;
+            if(score > best) { best = score; localStorage.setItem('blockBest', best); }
+        }
+
+        // Check level up
+        if(Object.keys(missionGoals).every(k => missionCollected[k] >= missionGoals[k])) {
+            document.getElementById('level-complete').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('level-complete').style.display = 'none';
+                level++; setupLevel();
+            }, 1500);
+        }
+        renderUI();
+    }
+
+    function collect(r,c) {
+        let val = grid[r][c];
+        if(missionGoals[val] && missionCollected[val] < missionGoals[val]) missionCollected[val]++;
+        grid[r][c] = 0;
+        for(let i=0; i<5; i++) particles.push({x: c*size+20, y: r*size+20, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1});
+    }
+
+    function renderUI() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('best').innerText = best;
+        const bar = document.getElementById('mission-bar');
+        bar.innerHTML = '';
+        for(let k in missionGoals) {
+            let done = missionCollected[k] >= missionGoals[k];
+            bar.innerHTML += `<span style="margin: 0 10px; opacity: ${done?0.3:1}">${k} ${missionCollected[k]}/${missionGoals[k]}</span>`;
+        }
+        
+        for(let i=0; i<3; i++) {
+            const slot = document.getElementById('slot'+i); slot.innerHTML = '';
+            if(!pieces[i]) continue;
+            if(!canFitAnywhere(pieces[i])) slot.classList.add('disabled'); else slot.classList.remove('disabled');
+            
+            const cv = document.createElement('canvas'); cv.width = 60; cv.height = 60;
+            const cx = cv.getContext('2d');
+            pieces[i].forEach((row,r) => row.forEach((v,c) => {
+                if(v) {
+                    let img = (typeof v === 'string') ? imgMap[v] : imgBtn;
+                    cx.drawImage(img, c*15, r*15, 14, 14);
+                }
+            }));
+            slot.appendChild(cv);
+        }
+    }
+
+    window.addEventListener('touchstart', e => {
+        const t = e.touches[0]; touchT = Date.now(); moved = false;
+        for(let i=0; i<3; i++) {
+            const r = document.getElementById('slot'+i).getBoundingClientRect();
+            if(t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom) {
+                if(pieces[i]) { dragIdx = i; dragPiece = pieces[i]; mX = t.clientX; mY = t.clientY; }
+            }
+        }
+    });
+
+    window.addEventListener('touchmove', e => {
+        if(dragIdx === -1) return; moved = true;
+        mX = e.touches[0].clientX; mY = e.touches[0].clientY;
+    });
+
+    window.addEventListener('touchend', () => {
+        if(dragIdx === -1) return;
+        if(!moved && (Date.now() - touchT < 250)) {
+            pieces[dragIdx] = pieces[dragIdx][0].map((_, i) => pieces[dragIdx].map(row => row[i]).reverse());
+            renderUI();
+        } else if(moved) {
+            const r = canvas.getBoundingClientRect();
+            const col = Math.round((mX - r.left - (dragPiece[0].length*size/2))/size);
+            const row = Math.round((mY - r.top - (dragPiece.length*size/2) - 50)/size); // Ajuste de offset do dedo
+            if(canPlace(dragPiece, row, col)) {
+                dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) grid[row+i][col+j] = v; }));
+                pieces[dragIdx] = null; checkLines();
+                if(pieces.every(p => p === null)) newSet();
+            }
+        }
+        dragIdx = -1; moved = false; renderUI();
+        // Check game over
+        if(!pieces.some(p => canFitAnywhere(p)) && pieces.some(p => p !== null)) {
+            document.getElementById('game-over').style.display = 'flex';
+            document.getElementById('final-score').innerText = "Pontuação: " + score;
+        }
+    });
+
+    function loop() {
+        ctx.save();
+        if(shakeIntensity > 0) { 
+            ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); 
+            shakeIntensity *= 0.9; 
+        }
+        ctx.clearRect(0,0,320,320);
+        
+        // Grid background
+        for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
+            ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1, size-1);
+            if(grid[r][c]) drawBlock(c*size, r*size, grid[r][c]);
+        }
+
+        // Dragging
+        if(dragIdx !== -1 && moved) {
+            const r = canvas.getBoundingClientRect();
+            let dx = mX - r.left - (dragPiece[0].length*size/2);
+            let dy = mY - r.top - (dragPiece.length*size/2) - 50;
+            dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) drawBlock(dx+j*size, dy+i*size, v, 0.7); }));
+        }
+
+        // Particles
+        particles.forEach((p, i) => {
+            p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+            ctx.fillStyle = `rgba(0, 255, 255, ${p.life})`; ctx.fillRect(p.x, p.y, 3, 3);
+            if(p.life <= 0) particles.splice(i, 1);
+        });
+
+        // Combo texts
+        comboTexts.forEach((ct, i) => {
+            ct.y -= 1; ct.life -= 0.01;
+            ctx.fillStyle = `rgba(255, 255, 255, ${ct.life})`; ctx.font = "bold 20px Arial";
+            ctx.textAlign = "center"; ctx.fillText(ct.text, ct.x, ct.y);
+            if(ct.life <= 0) comboTexts.splice(i, 1);
+        });
+
+        if(comboTimer > 0) comboTimer--; else comboCount = 0;
+
+        ctx.restore();
+        requestAnimationFrame(loop);
+    }
+</script>
+</body>
+</html>
