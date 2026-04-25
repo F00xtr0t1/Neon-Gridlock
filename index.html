@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Gridlock</title>
+
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="theme-color" content="#00ffd9">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            color: #00ffd9;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        /* O container do seu jogo deve ocupar a tela toda */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker ativo!'))
+                .catch(err => console.log('Erro no SW:', err));
+            });
+        }
+    </script>
+
+    </body>
+</html>
