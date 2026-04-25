@@ -3,62 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Neon Gridlock - F00XGAMES Pro</title>
+    <title>Neon Gridlock - F00XGAMES</title>
     <style>
         :root { 
             --main-color: #00ffff; 
-            --cyan-glow: rgba(0, 255, 255, 0.8);
             --bg-dark: #02111a; 
-            --glass-bg: rgba(0, 40, 60, 0.4);
+            --glass: rgba(0, 40, 60, 0.4);
         }
         
         body {
             background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
             margin: 0; overflow: hidden; touch-action: none; height: 100vh;
-            justify-content: center; transition: background 1s ease;
+            justify-content: center;
         }
 
-        /* EFEITO FLASH NO TABULEIRO */
-        body.flash { animation: screenFlash 0.15s; }
-        @keyframes screenFlash { 0% { background: #004444; } 100% { background: var(--bg-dark); } }
-
-        #game-container {
-            display: flex; flex-direction: column;
-            background-color: var(--glass-bg); backdrop-filter: blur(5px);
-            border-radius: 20px; padding: 15px; border: 1px solid rgba(0,255,255,0.1);
-            width: 95%; max-width: 360px; box-sizing: border-box;
-        }
-
-        .game-canvas {
-            width: 310px; height: 310px; margin: 0 auto; display: block;
-            background: rgba(0,0,0,0.6); border: 2px solid #333;
-            border-radius: 12px; box-shadow: 0 0 25px rgba(0,0,0,0.7);
-        }
-
-        #ui-container { margin-bottom: 10px; text-align: center; }
-        .score-panel { padding: 5px; }
-        .stats-row { display: flex; justify-content: center; gap: 25px; }
-        .stat-val { color: var(--main-color); font-weight: bold; font-size: 22px; text-shadow: 0 0 10px var(--main-color); }
-
-        /* MARCA F00XGAMES NEON */
+        /* EFEITO NEON DA MARCA */
         .neon-brand {
             font-size: 18px; font-weight: bold; color: #fff; text-transform: uppercase;
             letter-spacing: 4px; text-shadow: 0 0 5px #fff, 0 0 15px var(--main-color);
             margin: 15px 0; animation: brandPulse 2s infinite alternate;
+            z-index: 10;
         }
         @keyframes brandPulse { 
             from { opacity: 0.6; transform: scale(0.95); } 
             to { opacity: 1; transform: scale(1); text-shadow: 0 0 10px #fff, 0 0 25px var(--main-color); } 
         }
 
+        #game-container {
+            display: flex; flex-direction: column;
+            background: var(--glass); backdrop-filter: blur(10px);
+            border-radius: 20px; padding: 15px; border: 1px solid rgba(0,255,255,0.1);
+            width: 95%; max-width: 360px; box-sizing: border-box;
+        }
+
+        canvas {
+            width: 310px; height: 310px; margin: 0 auto; display: block;
+            background: rgba(0,0,0,0.6); border: 2px solid #333;
+            border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .score-panel { text-align: center; margin-bottom: 10px; }
+        .stats-row { display: flex; justify-content: center; gap: 30px; }
+        .stat-val { color: var(--main-color); font-weight: bold; font-size: 24px; text-shadow: 0 0 10px var(--main-color); }
+
         .pieces-selector { 
             display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.4); 
             padding: 12px; border-radius: 18px; justify-content: center;
-            border: 1px solid rgba(255,255,255,0.05);
         }
         .slot { width: 85px; height: 85px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
-        .disabled { opacity: 0.15; filter: grayscale(1) brightness(0.5); }
+        .disabled { opacity: 0.15; filter: grayscale(1); }
 
         #start-screen, #game-over {
             position: fixed; inset: 0; background: radial-gradient(circle, #0a2a3a 0%, #02111a 100%);
@@ -67,39 +61,33 @@
 
         .btn {
             background: linear-gradient(45deg, #00ffff, #0080ff); color: #000;
-            border: none; padding: 16px 45px; font-size: 20px; font-weight: bold;
-            border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,255,0.5);
-            text-transform: uppercase;
+            border: none; padding: 16px 45px; font-size: 18px; font-weight: bold;
+            border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,255,0.4);
         }
 
-        #level-complete {
-            position: fixed; inset: 0; z-index: 999; display: none; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-        }
+        #mission-bar { margin-top: 8px; font-size: 16px; font-weight: bold; color: #ffd700; }
     </style>
 </head>
 <body>
 
 <div id="start-screen">
-    <h1 style="color:var(--main-color); font-size: 38px; text-shadow: 0 0 20px var(--main-color); margin-bottom: 5px;">NEON GRIDLOCK</h1>
-    <p id="menu-best" style="margin-bottom: 30px; opacity: 0.8;">RECORDE: 0</p>
-    <button class="btn" onclick="initGame()">INICIAR JOGO</button>
+    <h1 style="color:var(--main-color); font-size: 36px; text-shadow: 0 0 20px var(--main-color);">NEON GRIDLOCK</h1>
+    <p id="menu-best">RECORDE: 0</p>
+    <button class="btn" onclick="initGame()">JOGAR</button>
     <div class="neon-brand">F00XGAMES</div>
 </div>
 
 <div id="game-container">
-    <div id="ui-container">
-        <div class="score-panel">
-            <div id="info" style="font-size: 12px; opacity: 0.7; letter-spacing: 2px;">FASE 1</div>
-            <div class="stats-row">
-                <div>PONTOS <br> <span id="score" class="stat-val">0</span></div>
-                <div>RECORDE <br> <span id="best" class="stat-val" style="color: gold;">0</span></div>
-            </div>
-            <div id="mission-bar" style="margin-top: 10px; font-weight: bold;"></div>
+    <div class="score-panel">
+        <div id="info" style="font-size: 12px; opacity: 0.6; letter-spacing: 2px;">FASE 1</div>
+        <div class="stats-row">
+            <div>PONTOS<br><span id="score" class="stat-val">0</span></div>
+            <div>RECORDE<br><span id="best" class="stat-val">0</span></div>
         </div>
+        <div id="mission-bar"></div>
     </div>
 
-    <canvas id="gameCanvas" class="game-canvas" width="320" height="320"></canvas>
+    <canvas id="gameCanvas" width="320" height="320"></canvas>
 
     <div class="pieces-selector">
         <div id="slot0" class="slot"></div>
@@ -108,14 +96,10 @@
     </div>
 </div>
 
-<div id="level-complete">
-    <div id="level-complete-text" style="font-size: 36px; color: cyan; text-shadow: 0 0 20px cyan;">FASE CONCLUÍDA!</div>
-</div>
-
 <div id="game-over" style="display:none;">
-    <h2 style="color:#ff4444; font-size: 40px; text-shadow: 0 0 20px red;">FIM DE JOGO</h2>
-    <p id="final-score" style="font-size: 20px;">Pontuação: 0</p>
-    <button class="btn" style="margin-top: 20px;" onclick="location.reload()">RECOMEÇAR</button>
+    <h2 style="color:#ff4444; font-size: 40px;">FIM DE JOGO</h2>
+    <p id="final-score" style="font-size: 22px;"></p>
+    <button class="btn" onclick="location.reload()">RECORRER</button>
     <div class="neon-brand">F00XGAMES</div>
 </div>
 
@@ -125,7 +109,6 @@
     const ctx = canvas.getContext('2d');
     const size = 40;
 
-    // Assets - Caminhos fixos para APK
     const imgBtn = new Image(); imgBtn.src = 'assets/bloco.png';
     const imgStar = new Image(); imgStar.src = 'assets/estrela.png';
     const imgFire = new Image(); imgFire.src = 'assets/fogo.png';
@@ -135,12 +118,10 @@
     let grid = Array(8).fill().map(() => Array(8).fill(0));
     let score = 0, level = 1, best = localStorage.getItem('blockBest') || 0;
     let missionGoals = {}, missionCollected = {};
-    let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = -1000, mY = -1000;
-    let moved = false, touchT = 0, particles = [], comboTexts = [];
-    let comboCount = 0, comboTimer = 0, shakeIntensity = 0;
+    let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = 0, mY = 0;
+    let moved = false, touchT = 0, particles = [], comboCount = 0, shakeIntensity = 0;
 
     const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
-    const comboPhrases = ["BOM!", "ENERGIA!", "TURBO!", "INCRÍVEL!", "LENDÁRIO!", "DEUS!"];
 
     document.getElementById('best').innerText = best;
     document.getElementById('menu-best').innerText = "RECORDE: " + best;
@@ -155,20 +136,9 @@
         grid = Array(8).fill().map(() => Array(8).fill(0));
         missionGoals = { "⭐": 3 + level };
         if(level >= 3) missionGoals["🔥"] = 2 + level;
-        for (let key in missionGoals) missionCollected[key] = 0;
+        for (let k in missionGoals) missionCollected[k] = 0;
         document.getElementById('info').innerText = "FASE " + level;
         newSet();
-    }
-
-    function drawBlock(x, y, type, alpha = 1) {
-        ctx.globalAlpha = alpha;
-        let img = (typeof type === 'string' && imgMap[type]) ? imgMap[type] : imgBtn;
-        if(img.complete) {
-            ctx.drawImage(img, x, y, size-1, size-1);
-        } else {
-            ctx.fillStyle = "cyan"; ctx.fillRect(x+1, y+1, size-2, size-2);
-        }
-        ctx.globalAlpha = 1;
     }
 
     function newSet() {
@@ -176,12 +146,21 @@
         for(let i=0; i<3; i++) {
             let p = JSON.parse(JSON.stringify(shapes[Math.floor(Math.random()*shapes.length)]));
             if(Math.random() < 0.4) {
-                let r = Math.floor(Math.random()*p.length), c = Math.floor(Math.random()*p[0].length);
+                let r = Math.floor(Math.random()*p.length);
+                let c = Math.floor(Math.random()*p[0].length);
                 if(p[r][c]) p[r][c] = types[Math.floor(Math.random()*types.length)];
             }
             pieces[i] = p;
         }
         renderUI();
+    }
+
+    function drawBlock(x, y, type, alpha = 1) {
+        ctx.globalAlpha = alpha;
+        let img = (typeof type === 'string' && imgMap[type]) ? imgMap[type] : imgBtn;
+        if(img.complete) ctx.drawImage(img, x, y, size-1, size-1);
+        else { ctx.fillStyle = "cyan"; ctx.fillRect(x+1, y+1, size-2, size-2); }
+        ctx.globalAlpha = 1;
     }
 
     function canPlace(p, r, c) {
@@ -192,7 +171,7 @@
         return true;
     }
 
-    function canFitAnywhere(p) {
+    function canFit(p) {
         if(!p) return true;
         for (let r = 0; r <= 8 - p.length; r++)
             for (let c = 0; c <= 8 - p[0].length; c++)
@@ -200,59 +179,16 @@
         return false;
     }
 
-    function checkLines() {
-        let rd = [], cd = [];
-        for(let r=0; r<8; r++) if(grid[r].every(v => v !== 0)) rd.push(r);
-        for(let c=0; c<8; c++) { let full = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) full = false; if(full) cd.push(c); }
-        
-        if(rd.length || cd.length) {
-            comboCount++; comboTimer = 100;
-            if(navigator.vibrate) navigator.vibrate([50, 30, 50]); // Vibração Pro
-            
-            let phrase = comboPhrases[Math.min(comboCount-1, comboPhrases.length-1)];
-            comboTexts.push({text: phrase, x: 160, y: 160, life: 1});
-            shakeIntensity = 10;
-            
-            rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
-            cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
-            
-            score += (rd.length + cd.length) * 10 * comboCount;
-            if(score > best) { best = score; localStorage.setItem('blockBest', best); }
-        }
-
-        // Check level up
-        if(Object.keys(missionGoals).every(k => missionCollected[k] >= missionGoals[k])) {
-            document.getElementById('level-complete').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('level-complete').style.display = 'none';
-                level++; setupLevel();
-            }, 1500);
-        }
-        renderUI();
-    }
-
-    function collect(r,c) {
-        let val = grid[r][c];
-        if(missionGoals[val] && missionCollected[val] < missionGoals[val]) missionCollected[val]++;
-        grid[r][c] = 0;
-        for(let i=0; i<5; i++) particles.push({x: c*size+20, y: r*size+20, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1});
-    }
-
     function renderUI() {
         document.getElementById('score').innerText = score;
-        document.getElementById('best').innerText = best;
         const bar = document.getElementById('mission-bar');
         bar.innerHTML = '';
-        for(let k in missionGoals) {
-            let done = missionCollected[k] >= missionGoals[k];
-            bar.innerHTML += `<span style="margin: 0 10px; opacity: ${done?0.3:1}">${k} ${missionCollected[k]}/${missionGoals[k]}</span>`;
-        }
+        for(let k in missionGoals) bar.innerHTML += `<span style="margin:0 10px">${k} ${missionCollected[k]}/${missionGoals[k]}</span>`;
         
         for(let i=0; i<3; i++) {
             const slot = document.getElementById('slot'+i); slot.innerHTML = '';
             if(!pieces[i]) continue;
-            if(!canFitAnywhere(pieces[i])) slot.classList.add('disabled'); else slot.classList.remove('disabled');
-            
+            if(!canFit(pieces[i])) slot.classList.add('disabled'); else slot.classList.remove('disabled');
             const cv = document.createElement('canvas'); cv.width = 60; cv.height = 60;
             const cx = cv.getContext('2d');
             pieces[i].forEach((row,r) => row.forEach((v,c) => {
@@ -284,64 +220,70 @@
         if(dragIdx === -1) return;
         if(!moved && (Date.now() - touchT < 250)) {
             pieces[dragIdx] = pieces[dragIdx][0].map((_, i) => pieces[dragIdx].map(row => row[i]).reverse());
-            renderUI();
         } else if(moved) {
             const r = canvas.getBoundingClientRect();
             const col = Math.round((mX - r.left - (dragPiece[0].length*size/2))/size);
-            const row = Math.round((mY - r.top - (dragPiece.length*size/2) - 50)/size); // Ajuste de offset do dedo
+            const row = Math.round((mY - r.top - (dragPiece.length*size/2) - 60)/size);
             if(canPlace(dragPiece, row, col)) {
                 dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) grid[row+i][col+j] = v; }));
-                pieces[dragIdx] = null; checkLines();
+                pieces[dragIdx] = null;
+                if(navigator.vibrate) navigator.vibrate(40);
+                checkLines();
                 if(pieces.every(p => p === null)) newSet();
             }
         }
         dragIdx = -1; moved = false; renderUI();
-        // Check game over
-        if(!pieces.some(p => canFitAnywhere(p)) && pieces.some(p => p !== null)) {
+        if(!pieces.some(p => canFit(p)) && pieces.some(p => p !== null)) {
             document.getElementById('game-over').style.display = 'flex';
-            document.getElementById('final-score').innerText = "Pontuação: " + score;
+            document.getElementById('final-score').innerText = "SCORE: " + score;
         }
     });
 
+    function checkLines() {
+        let rd = [], cd = [];
+        for(let r=0; r<8; r++) if(grid[r].every(v => v !== 0)) rd.push(r);
+        for(let c=0; c<8; c++) { let f = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) f = false; if(f) cd.push(c); }
+        
+        if(rd.length || cd.length) {
+            shakeIntensity = 8;
+            if(navigator.vibrate) navigator.vibrate([60, 40, 60]);
+            rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
+            cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
+            score += (rd.length + cd.length) * 10;
+            if(score > best) { best = score; localStorage.setItem('blockBest', best); }
+        }
+
+        if(Object.keys(missionGoals).every(k => missionCollected[k] >= missionGoals[k])) {
+            level++; setupLevel();
+        }
+    }
+
+    function collect(r,c) {
+        let v = grid[r][c];
+        if(missionGoals[v] && missionCollected[v] < missionGoals[v]) missionCollected[v]++;
+        grid[r][c] = 0;
+        for(let i=0; i<4; i++) particles.push({x: c*size+20, y: r*size+20, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 1});
+    }
+
     function loop() {
         ctx.save();
-        if(shakeIntensity > 0) { 
-            ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); 
-            shakeIntensity *= 0.9; 
-        }
+        if(shakeIntensity > 0) { ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); shakeIntensity *= 0.9; }
         ctx.clearRect(0,0,320,320);
-        
-        // Grid background
         for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
             ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1, size-1);
             if(grid[r][c]) drawBlock(c*size, r*size, grid[r][c]);
         }
-
-        // Dragging
         if(dragIdx !== -1 && moved) {
             const r = canvas.getBoundingClientRect();
             let dx = mX - r.left - (dragPiece[0].length*size/2);
-            let dy = mY - r.top - (dragPiece.length*size/2) - 50;
-            dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) drawBlock(dx+j*size, dy+i*size, v, 0.7); }));
+            let dy = mY - r.top - (dragPiece.length*size/2) - 60;
+            dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) drawBlock(dx+j*size, dy+i*size, v, 0.6); }));
         }
-
-        // Particles
         particles.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+            p.x += p.vx; p.y += p.vy; p.life -= 0.03;
             ctx.fillStyle = `rgba(0, 255, 255, ${p.life})`; ctx.fillRect(p.x, p.y, 3, 3);
             if(p.life <= 0) particles.splice(i, 1);
         });
-
-        // Combo texts
-        comboTexts.forEach((ct, i) => {
-            ct.y -= 1; ct.life -= 0.01;
-            ctx.fillStyle = `rgba(255, 255, 255, ${ct.life})`; ctx.font = "bold 20px Arial";
-            ctx.textAlign = "center"; ctx.fillText(ct.text, ct.x, ct.y);
-            if(ct.life <= 0) comboTexts.splice(i, 1);
-        });
-
-        if(comboTimer > 0) comboTimer--; else comboCount = 0;
-
         ctx.restore();
         requestAnimationFrame(loop);
     }
