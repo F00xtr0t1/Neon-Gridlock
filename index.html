@@ -2,50 +2,42 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Gridlock</title>
-
-    <link rel="manifest" href="manifest.json">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#00ffd9">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000000;
-            color: #00ffd9;
-            overflow: hidden;
-            font-family: sans-serif;
-        }
-        /* O container do seu jogo deve ocupar a tela toda */
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+    <title>Ciber-Tabuleiro Pro</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="start-screen">
+    <h1 style="color:#00ffff; letter-spacing:2px;">CIBER-TABULEIRO</h1>
+    <p id="menu-best">RECORDE: 0</p>
+    <button class="btn" onclick="initGame()">INICIAR JOGO</button>
+</div>
 
-    <div id="game-container">
+<div id="ui-container">
+    <div class="score-panel">
+        <div id="info" style="font-size: 12px; opacity: 0.7;">NÍVEL 1</div>
+        <div class="stats-row">
+            <div>PONTOS: <span id="score" class="stat-val">0</span></div>
+            <div>RECORDE: <span id="best" class="stat-val">0</span></div>
         </div>
+    <div id="mission-bar" style="margin-top: 5px; font-size: 18px;"></div>
+</div>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker ativo!'))
-                .catch(err => console.log('Erro no SW:', err));
-            });
-        }
-    </script>
+<canvas id="gameCanvas" width="320" height="320"></canvas>
 
-    </body>
-</html>
-<script src="cordova.js"></script>
+<div class="pieces-selector">
+    <div id="slot0" class="slot"></div>
+    <div id="slot1" class="slot"></div>
+    <div id="slot2" class="slot"></div>
+</div>
+
+<div id="game-over" style="display:none;">
+    <h2 style="color:#ff4444;">FIM DE JOGO</h2>
+    <p id="final-score">Pontuação: 0</p>
+    <button class="btn" onclick="location.reload()">RECOMEÇAR</button>
+</div>
+
 <script src="game.js"></script>
+</body>
+</html>
