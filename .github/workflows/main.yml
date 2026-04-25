@@ -1,5 +1,9 @@
-name: Build_APK
-on: [push]
+name: Build Debug APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,21 +16,15 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Build_Passo_a_Passo
-        run: |
-          npm install -g cordova
-          cordova create app com.neogridlock.game "NeonGridlock"
-          cd app
-          cordova platform add android@14.0.0
-          cp -r ../* www/ || true
-          sed -i 's/src=".\/game.js"/src="game.js"/g' www/index.html
-          sed -i 's/href=".\/style.css"/href="style.css"/g' www/index.html
-          sed -i '/<head>/a <script src="cordova.js"></script>' www/index.html
-          sed -i '/<\/widget>/i <preference name="android-targetSdkVersion" value="35" />' config.xml
-          sed -i '/<\/widget>/i <preference name="Scheme" value="https" />' config.xml
-          sed -i '/<\/widget>/i <preference name="Hostname" value="localhost" />' config.xml
-          cordova build android --release -- --packageType=apk
+      - run: npm install -g cordova@12
+      - run: |
+          cordova create app com.f00xgames.neongridlock "Neon Gridlock"
+          rm -rf app/www/*
+          cp index.html app/www/
+          cp -r assets app/www/
+      - run: cd app && cordova platform add android@13
+      - run: cd app && cordova build android
       - uses: actions/upload-artifact@v4
         with:
-          name: Neon-Gridlock-APK
-          path: app/platforms/android/app/build/outputs/apk/release/*.apk
+          name: NeonGridlock-debug
+          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
