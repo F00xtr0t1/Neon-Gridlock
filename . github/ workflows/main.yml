@@ -23,10 +23,10 @@ jobs:
           cordova create app com.neogridlock.game "Neon Gridlock"
           cd app
           rm -rf www/*
-          cp -r../assets www/
-          cp../index.html www/
-          cp../game.js www/
-          cp../style.css www/
+          cp -r ../assets www/
+          cp ../index.html www/
+          cp ../game.js www/
+          cp ../style.css www/
           cordova platform add android@13
           cordova build android --release
           
