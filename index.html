@@ -19,62 +19,31 @@
             color: #00ffd9;
             overflow: hidden;
             font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
         }
-        /* Garantindo que o canvas do jogo fique centralizado */
-        canvas {
-            display: block;
-            max-width: 100%;
-            max-height: 80vh;
-            touch-action: none;
+        /* O container do seu jogo deve ocupar a tela toda */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 <body>
 
-    <div id="start-screen" style="text-align:center;">
-        <h1 style="color:#00ffff;">NEON GRIDLOCK</h1>
-        <p id="menu-best">RECORDE: 0</p>
-        <button onclick="initGame()" style="padding:15px 30px; font-size:20px; background:#00ffff; border:none; border-radius:10px; font-weight:bold;">INICIAR</button>
-    </div>
-
-    <div id="ui-container" style="text-align:center;">
-        <div id="info">NÍVEL 1</div>
-        <div>PONTOS: <span id="score">0</span> | RECORDE: <span id="best">0</span></div>
-        <div id="mission-bar"></div>
-    </div>
-
-    <canvas id="gameCanvas" width="320" height="320"></canvas>
-
-    <div class="pieces-selector" style="display:flex; gap:10px; margin-top:10px;">
-        <div id="slot0" style="width:80px; height:80px; border:1px dashed #444;"></div>
-        <div id="slot1" style="width:80px; height:80px; border:1px dashed #444;"></div>
-        <div id="slot2" style="width:80px; height:80px; border:1px dashed #444;"></div>
-    </div>
-
-    <div id="game-over" style="display:none; flex-direction:column; align-items:center;">
-        <h2 style="color:red;">FIM DE JOGO</h2>
-        <p id="final-score">Pontos: 0</p>
-        <button onclick="location.reload()">RECOMEÇAR</button>
-    </div>
-
-    <script src="cordova.js"></script>
-    <script src="game.js"></script>
+    <div id="game-container">
+        </div>
 
     <script>
-        // Registro do Service Worker (opcional para APK, mas bom manter)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW ativo!'))
-                .catch(err => console.log('Erro SW:', err));
+                .then(reg => console.log('Service Worker ativo!'))
+                .catch(err => console.log('Erro no SW:', err));
             });
         }
     </script>
 
-</body>
+    </body>
 </html>
