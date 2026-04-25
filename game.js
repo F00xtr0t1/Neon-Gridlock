@@ -1,24 +1,11 @@
-// Espera o celular estar pronto para não dar tela preta
-document.addEventListener('deviceready', () => {
-    initGame(); 
-}, false);
-
-// Se testar no PC
-if (!window.cordova) {
-    window.onload = () => {
-       // Opcional: iniciar algo aqui se necessário
-    };
-}
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const size = 40;
 
-// --- CARREGAMENTO DE IMAGENS (Caminhos corrigidos sem o ./) ---
-const imgBtn = new Image(); imgBtn.src = 'assets/bloco.png';
-const imgStar = new Image(); imgStar.src = 'assets/estrela.png';
-const imgFire = new Image(); imgFire.src = 'assets/fogo.png';
-const imgThunder = new Image(); imgThunder.src = 'assets/raio.png';
+const imgBtn = new Image(); imgBtn.src = './assets/textures/bloco.png';
+const imgStar = new Image(); imgStar.src = './assets/textures/estrela.png';
+const imgFire = new Image(); imgFire.src = './assets/textures/fogo.png';
+const imgThunder = new Image(); imgThunder.src = './assets/textures/raio.png';
 
 const imgMap = { "⭐": imgStar, "🔥": imgFire, "⚡": imgThunder };
 
@@ -30,7 +17,7 @@ let grid = Array(8).fill().map(() => Array(8).fill(0));
 let score = 0, level = 1, best = localStorage.getItem('blockBest') || 0;
 let missionGoals = {}, missionCollected = {};
 let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = -1000, mY = -1000;
-let particles = [], floatingItems = [], moved = false, touchT = 0;
+let moved = false, touchT = 0;
 
 const icons = { star: "⭐", fire: "🔥", thunder: "⚡" };
 const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
@@ -57,12 +44,15 @@ function drawBlock(x, y, type) {
     let img = imgBtn;
     if (type && typeof type === 'string' && imgMap[type]) img = imgMap[type];
 
-    if (img.complete && img.naturalWidth !== 0) {
+    if (img.complete && img.naturalWidth!== 0) {
         ctx.drawImage(img, x, y, size - 1, size - 1);
     } else {
-        // Se a imagem falhar, desenha o visual original de fallback
         ctx.fillStyle = "rgba(0, 255, 255, 0.3)";
         ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+        if(type && type.length < 3) {
+            ctx.fillStyle = "white"; ctx.font = "14px Arial";
+            ctx.fillText(type, x+10, y+25);
+        }
     }
 }
 
@@ -70,9 +60,9 @@ function rotate(p) { return p[0].map((_, i) => p.map(row => row[i]).reverse()); 
 
 function canPlace(p, r, c) {
     if (r < 0 || c < 0 || r + p.length > 8 || c + p[0].length > 8) return false;
-    for (let i = 0; i < p.length; i++) 
-        for (let j = 0; j < p[0].length; j++) 
-            if (p[i][j] && grid[r+i][c+j] !== 0) return false;
+    for (let i = 0; i < p.length; i++)
+        for (let j = 0; j < p[0].length; j++)
+            if (p[i][j] && grid[r+i][c+j]!== 0) return false;
     return true;
 }
 
@@ -115,26 +105,26 @@ function renderUI() {
         let done = missionCollected[type] >= missionGoals[type];
         mBar.innerHTML += `<span style="margin:0 10px; opacity:${done?0.3:1}">${type} ${missionCollected[type]}/${missionGoals[type]}</span>`;
     }
-    
+
     let moves = 0;
     for(let i=0; i<3; i++) {
         const s = document.getElementById('slot'+i); s.innerHTML = '';
         if(!pieces[i]) continue;
         if(!canFitAnywhere(pieces[i])) s.classList.add('disabled'); else { s.classList.remove('disabled'); moves++; }
-        
-        const cvPiece = document.createElement('canvas'); 
+
+        const cvPiece = document.createElement('canvas');
         cvPiece.width = pieces[i][0].length * 20; cvPiece.height = pieces[i].length * 20;
         const cxP = cvPiece.getContext('2d');
         pieces[i].forEach((row,r)=>row.forEach((v,c)=>{
             if(v){
-                let pImg = (typeof v === 'string') ? imgMap[v] : imgBtn;
+                let pImg = (typeof v === 'string')? imgMap[v] : imgBtn;
                 if(pImg.complete) cxP.drawImage(pImg, c*20, r*20, 19, 19);
                 else { cxP.fillStyle="#00ffff"; cxP.fillRect(c*20, r*20, 18, 18); }
             }
         }));
         s.appendChild(cvPiece);
     }
-    if (moves === 0 && pieces.some(p => p !== null)) {
+    if (moves === 0 && pieces.some(p => p!== null)) {
         document.getElementById('game-over').style.display = 'flex';
         document.getElementById('final-score').innerText = `Pontos: ${score}`;
     }
@@ -142,18 +132,18 @@ function renderUI() {
 
 function checkLines() {
     let rd = [], cd = [];
-    for(let r=0; r<8; r++) if(grid[r].every(v => v !== 0)) rd.push(r);
+    for(let r=0; r<8; r++) if(grid[r].every(v => v!== 0)) rd.push(r);
     for(let c=0; c<8; c++) {
         let f = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) f = false;
         if(f) cd.push(c);
     }
-    if(rd.length || cd.length) { 
-        score += (rd.length + cd.length) * 10; 
+    if(rd.length || cd.length) {
+        score += (rd.length + cd.length) * 10;
         if(score > best) { best = score; localStorage.setItem('blockBest', best); document.getElementById('best').innerText = best; }
     }
     rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
     cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
-    
+
     let allDone = true;
     for (let type in missionGoals) if (missionCollected[type] < missionGoals[type]) allDone = false;
     if (allDone && Object.keys(missionGoals).length > 0) { level++; setupLevel(); }
@@ -203,7 +193,7 @@ function loop() {
     ctx.clearRect(0,0,320,320);
     for(let r=0; r<8; r++) {
         for(let c=0; c<8; c++) {
-            ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1, size-1);
+            ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1);
             if(grid[r][c]) drawBlock(c*size, r*size, grid[r][c]);
         }
     }
