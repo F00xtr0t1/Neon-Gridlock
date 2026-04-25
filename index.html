@@ -9,7 +9,8 @@
         body {
             background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
-            margin: 0; overflow: hidden; touch-action: none; height: 100vh; justify-content: center;
+            margin: 0; overflow: hidden; touch-action: none; height: 100vh;
+            justify-content: center; /* CENTRALIZA TUDO */
             transition: background 0.1s;
         }
 
@@ -23,46 +24,56 @@
             display: flex; flex-direction: column;
             background-color: rgba(220, 220, 220, 0.1);
             border-radius: 15px; padding: 10px;
+            width: 100%; max-width: 360px; /* FIXA LARGURA E CENTRALIZA */
+            margin: 0 auto;
+            box-sizing: border-box;
         }
 
-       .game-canvas {
-            width: 100%; height: 100vw; max-width: 500px; max-height: 500px;
-            margin-left: auto; margin-right: auto;
+      .game-canvas {
+            width: 320px; height: 320px; /* TAMANHO FIXO */
+            margin-left: auto; margin-right: auto; display: block;
             background: rgba(0,0,0,0.5); border: 2px solid #333;
             border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        #ui-container { margin: 10px; text-align: center; width: 100%; z-index: 10; }
-       .score-panel {
+        #ui-container { margin: 10px 0; text-align: center; width: 100%; z-index: 10; }
+      .score-panel {
             background: rgba(0, 40, 60, 0.4); backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px;
             padding: 10px; margin: 5px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
         }
-       .stats-row { display: flex; justify-content: center; gap: 20px; }
-       .stat-val { color: var(--main-color); font-weight: bold; font-size: 18px; }
+      .stats-row { display: flex; justify-content: center; gap: 20px; }
+      .stat-val { color: var(--main-color); font-weight: bold; font-size: 18px; }
 
-       .pieces-selector { display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; }
-       .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
-       .disabled { opacity: 0.2; filter: grayscale(1); }
+      .pieces-selector { display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; justify-content: center; }
+      .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
+      .disabled { opacity: 0.2; filter: grayscale(1); }
 
         #start-screen, #game-over {
             position: fixed; inset: 0; background: rgba(2, 17, 26, 0.95);
             z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-       .btn {
+      .btn {
             background: linear-gradient(45deg, #00ffff, #0080ff); color: #000;
             border: none; padding: 15px 40px; font-size: 18px; font-weight: bold;
             border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,255,255,0.4);
         }
 
-       .keys { font-family: 'Lato', sans-serif; text-align: center; width: 100%; padding: 10px; box-sizing: border-box; height: 200px; margin: auto; display: none; }
-       .up { position: relative; top: -4px; }
-       .chevron::before { border-style: solid; border-width: 8px 8px 0 0; content: ''; display: inline-block; height: 20px; width: 20px; top: -10px; position: relative; transform: rotate(-45deg); }
-       .chevron.down::before { transform: rotate(135deg); top: -22px; }
-       .chevron.right::before { transform: rotate(45deg); top: -18px; left: -5px; }
-       .chevron.left::before { transform: rotate(225deg); top: -18px; left: 5px; }
-       .arr { cursor: pointer; width: 70px; height: 70px; text-align: center; line-height: 100px; background: gray; color: white; font-size: 50px; border-right: 10px solid #ccc; border-bottom: 10px solid #ccc; border-left: 10px solid #ddd; border-top: 10px solid #eee; display: inline-block; margin: 5px; transition: all.05s linear; user-select: none; }
-       .arr:active { background: #555; }
+        /* FRASE DE FASE CONCLUÍDA */
+        #level-complete {
+            position: fixed; inset: 0; z-index: 999;
+            display: none; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        }
+        #level-complete-text {
+            font-size: 32px; font-weight: bold; color: var(--main-color);
+            text-shadow: 0 0 20px var(--main-color);
+            animation: popIn 0.5s ease-out;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -81,7 +92,8 @@
                 <div>PONTOS: <span id="score" class="stat-val">0</span></div>
                 <div>RECORDE: <span id="best" class="stat-val">0</span></div>
             </div>
-        <div id="mission-bar" style="margin-top: 5px; font-size: 18px;"></div>
+            <div id="mission-bar" style="margin-top: 5px; font-size: 18px;"></div>
+        </div>
     </div>
 
     <canvas id="gameCanvas" class="game-canvas" width="320" height="320"></canvas>
@@ -91,6 +103,10 @@
         <div id="slot1" class="slot"></div>
         <div id="slot2" class="slot"></div>
     </div>
+</div>
+
+<div id="level-complete">
+    <div id="level-complete-text">FASE CONCLUÍDA 1★</div>
 </div>
 
 <div id="game-over" style="display:none;">
@@ -108,6 +124,270 @@
     const imgStar = new Image(); imgStar.src = './assets/estrela.png';
     const imgFire = new Image(); imgFire.src = './assets/fogo.png';
     const imgThunder = new Image(); imgThunder.src = './assets/raio.png';
+    const imgMap = { "⭐": imgStar, "🔥": imgFire, "⚡": imgThunder };
+
+    [imgBtn, imgStar, imgFire, imgThunder].forEach(img => {
+        img.onload = () => { renderUI(); };
+    });
+
+    let grid = Array(8).fill().map(() => Array(8).fill(0));
+    let score = 0, level = 1, best = localStorage.getItem('blockBest') || 0;
+    let missionGoals = {}, missionCollected = {};
+    let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = -1000, mY = -1000;
+    let moved = false, touchT = 0, audioCtx, bgMusicLoop = null, isMuted = false;
+
+    // SISTEMA DE COMBO - 10 SEGUNDOS
+    let comboCount = 0, comboTimer = 0;
+    const comboMaxTime = 600; // 10s a 60fps
+    let comboTexts = [];
+    let boardFlashTimer = 0;
+    let flashTimer = 0;
+
+    const icons = { star: "⭐", fire: "🔥", thunder: "⚡" };
+    const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
+    const comboPhrases = ["BOM!", "MUITO BOM!", "EXCELENTE!", "INCRÍVEL!", "LENDÁRIO!", "DEUS!", "IMPARÁVEL!"];
+
+    document.getElementById('best').innerText = best;
+    document.getElementById('menu-best').innerText = "RECORDE: " + best;
+
+    function getComboColor() {
+        const colors = ["#00ff41", "#00ffff", "#ffff00", "#ff00ff", "#ff4400", "#0080ff"];
+        return colors[comboCount % colors.length];
+    }
+
+    function startBgMusic() {
+        if (!audioCtx || bgMusicLoop) return;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.03;
+        gain.connect(audioCtx.destination);
+        const notes = [196, 247, 294, 392, 294, 247];
+        let idx = 0;
+        function loopNote() {
+            if (!gain) return;
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.value = notes[idx];
+            osc.connect(gain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.35);
+            idx = (idx + 1) % notes.length;
+            bgMusicLoop = setTimeout(loopNote, 400);
+        }
+        loopNote();
+    }
+
+    function playSound(freq, duration, type = 'sine', vol = 0.1) {
+        if (!audioCtx || isMuted) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.type = type;
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function initGame() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('start-screen').style.display = 'none';
+        startBgMusic();
+        setupLevel();
+        requestAnimationFrame(loop);
+    }
+
+    function setupLevel() {
+        missionGoals = {}; missionCollected = {};
+        missionGoals[icons.star] = 3 + Math.floor(level * 1.5);
+        if(level >= 3) missionGoals[icons.fire] = 2 + level;
+        for (let key in missionGoals) missionCollected[key] = 0;
+        grid = Array(8).fill().map(() => Array(8).fill(0));
+        newSet();
+    }
+
+    function showLevelComplete() {
+        const el = document.getElementById('level-complete');
+        const txt = document.getElementById('level-complete-text');
+        const stars = level <= 3? level : 3;
+        txt.innerText = `FASE CONCLUÍDA ${level}${'★'.repeat(stars)}`;
+        el.style.display = 'flex';
+        playSound(523, 0.2, 'square', 0.2);
+        setTimeout(() => { playSound(659, 0.2, 'square', 0.2); }, 200);
+        setTimeout(() => { playSound(784, 0.4, 'square', 0.2); }, 400);
+
+        setTimeout(() => {
+            el.style.display = 'none';
+            level++;
+            setupLevel();
+        }, 2000);
+    }
+
+    function drawBlock(x, y, type) {
+        let img = imgBtn;
+        if (type && typeof type === 'string' && imgMap[type]) img = imgMap[type];
+        if (img.complete && img.naturalWidth!== 0) {
+            ctx.drawImage(img, x, y, size - 1, size - 1);
+        } else {
+            ctx.fillStyle = "rgba(0, 255, 255, 0.3)";
+            ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+            if(type && type.length < 3) {
+                ctx.fillStyle = "white"; ctx.font = "14px Arial";
+                ctx.fillText(type, x+10, y+25);
+            }
+        }
+    }
+
+    function rotate(p) { return p[0].map((_, i) => p.map(row => row[i]).reverse()); }
+
+    function canPlace(p, r, c) {
+        if (r < 0 || c < 0 || r + p.length > 8 || c + p[0].length > 8) return false;
+        for (let i = 0; i < p.length; i++)
+            for (let j = 0; j < p[0].length; j++)
+                if (p[i][j] && grid[r+i][c+j]!== 0) return false;
+        return true;
+    }
+
+    function canFitAnywhere(p) {
+        let cur = p;
+        for (let rot = 0; rot < 4; rot++) {
+            for (let r = 0; r <= 8 - cur.length; r++)
+                for (let c = 0; c <= 8 - cur[0].length; c++)
+                    if (canPlace(cur, r, c)) return true;
+            cur = rotate(cur);
+        }
+        return false;
+    }
+
+    function injectItems(piece) {
+        let types = Object.keys(missionGoals);
+        if (Math.random() < 0.4 && types.length > 0) {
+            let type = types[Math.floor(Math.random() * types.length)];
+            let coords = [];
+            piece.forEach((row, r) => row.forEach((v, c) => { if(v === 1) coords.push([r,c]); }));
+            if (coords.length > 0) {
+                let choice = coords[Math.floor(Math.random() * coords.length)];
+                piece[choice[0]][choice[1]] = type;
+            }
+        }
+        return piece;
+    }
+
+    function newSet() {
+        for(let i=0; i<3; i++) pieces[i] = injectItems(JSON.parse(JSON.stringify(shapes[Math.floor(Math.random()*shapes.length)])));
+        renderUI();
+    }
+
+    function renderUI() {
+        document.getElementById('info').innerText = `NÍVEL ${level}`;
+        document.getElementById('score').innerText = score;
+        document.getElementById('score').style.color = comboCount > 0? getComboColor() : "#00ffff";
+        const mBar = document.getElementById('mission-bar');
+        mBar.innerHTML = '';
+        for (let type in missionGoals) {
+            let done = missionCollected[type] >= missionGoals[type];
+            mBar.innerHTML += `<span style="margin:0 10px; opacity:${done?0.3:1}">${type} ${missionCollected[type]}/${missionGoals[type]}</span>`;
+        }
+
+        let moves = 0;
+        for(let i=0; i<3; i++) {
+            const s = document.getElementById('slot'+i); s.innerHTML = '';
+            if(!pieces[i]) continue;
+            if(!canFitAnywhere(pieces[i])) s.classList.add('disabled'); else { s.classList.remove('disabled'); moves++; }
+
+            const cvPiece = document.createElement('canvas');
+            cvPiece.width = pieces[i][0].length * 20; cvPiece.height = pieces[i].length * 20;
+            const cxP = cvPiece.getContext('2d');
+            pieces[i].forEach((row,r)=>row.forEach((v,c)=>{
+                if(v){
+                    let pImg = (typeof v === 'string')? imgMap[v] : imgBtn;
+                    if(pImg.complete) cxP.drawImage(pImg, c*20, r*20, 19, 19);
+                    else { cxP.fillStyle="#00ffff"; cxP.fillRect(c*20, r*20, 18, 18); }
+                }
+            }));
+            s.appendChild(cvPiece);
+        }
+        if (moves === 0 && pieces.some(p => p!== null)) {
+            if (bgMusicLoop) clearTimeout(bgMusicLoop);
+            playSound(150, 0.8, 'sawtooth', 0.1);
+            document.getElementById('game-over').style.display = 'flex';
+            document.getElementById('final-score').innerText = `Pontos: ${score}`;
+        }
+    }
+
+    function spawnComboText() {
+        const txt = comboPhrases[Math.min(comboCount - 1, comboPhrases.length - 1)];
+        comboTexts.push({
+            text: txt, x: 160, y: 120, alpha: 1, scale: 0.5, color: getComboColor()
+        });
+    }
+
+    function checkLines() {
+        let rd = [], cd = [];
+        for(let r=0; r<8; r++) if(grid[r].every(v => v!== 0)) rd.push(r);
+        for(let c=0; c<8; c++) {
+            let f = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) f = false;
+            if(f) cd.push(c);
+        }
+
+        if(rd.length || cd.length) {
+            comboCount++;
+            comboTimer = comboMaxTime; // 10 SEGUNDOS
+            boardFlashTimer = 8;
+            spawnComboText();
+
+            if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+            playSound(300 + (comboCount * 50), 0.2, 'square', 0.15);
+
+            if (comboCount >= 3) {
+                document.body.classList.add('flash');
+                flashTimer = 10;
+            }
+
+            score += (rd.length + cd.length) * 10 * comboCount;
+            if(score > best) { best = score; localStorage.setItem('blockBest', best); document.getElementById('best').innerText = best; }
+        } else {
+            comboCount = 0;
+        }
+
+        rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
+        cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
+
+        let allDone = true;
+        for (let type in missionGoals) if (missionCollected[type] < missionGoals[type]) allDone = false;
+        if (allDone && Object.keys(missionGoals).length > 0) {
+            showLevelComplete(); // MOSTRA FRASE DE FASE CONCLUÍDA
+            return;
+        }
+        renderUI();
+    }
+
+    function collect(r,c) {
+        let val = grid[r][c]; if(val === 0) return;
+        if(missionGoals[val]) { missionCollected[val]++; }
+        grid[r][c] = 0;
+    }
+
+    window.addEventListener('touchstart', e => {
+        const t = e.touches[0]; moved = false; touchT = Date.now();
+        for(let i=0; i<3; i++) {
+            const r = document.getElementById('slot'+i).getBoundingClientRect();
+            if(t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom) {
+                if(pieces[i]) { dragIdx = i; dragPiece = pieces[i]; mX = t.clientX; mY = t.clientY; }
+            }
+        }
+    });
+
+    window.addEventListener('touchmove', e => {
+        if(dragIdx === -1) return; moved = true; mX = e.touches[0].clientX; mY = e.touches[0].clientY;
+        document.getElementById('slot'+dragIdx).style.opacity = '0.1';
+    });
+
+    window.addEventListener('touchend', () => {
+        if(dragIdx === -1) return;
+        if(!moved && Date.now()-touchT < 250) { pieces[dragIdx] = rotate(pieces    const imgThunder = new Image(); imgThunder.src = './assets/raio.png';
     const imgMap = { "⭐": imgStar, "🔥": imgFire, "⚡": imgThunder };
 
     [imgBtn, imgStar, imgFire, imgThunder].forEach(img => {
