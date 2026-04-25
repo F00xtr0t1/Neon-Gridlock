@@ -1,99 +1,37 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ciber-Tabuleiro Pro</title>
-    <style>
-        :root { --main-color: #00ffff; --bg-dark: #02111a; }
-        body { 
-            background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; 
-            display: flex; flex-direction: column; align-items: center; 
-            margin: 0; overflow: hidden; touch-action: none; height: 100vh; justify-content: center;
-        }
-        
-        #ui-container { margin: 10px; text-align: center; width: 100%; z-index: 10; }
-        .score-panel {
-            background: rgba(0, 40, 60, 0.4); backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px;
-            padding: 10px; margin: 5px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
-        }
-        .stats-row { display: flex; justify-content: center; gap: 20px; }
-        .stat-val { color: var(--main-color); font-weight: bold; font-size: 18px; }
+// Aguarda o dispositivo estar pronto para iniciar o motor do jogo
+document.addEventListener('deviceready', () => {
+    console.log("Sistema pronto. Iniciando Neon Gridlock...");
+    startNeonGridlock();
+}, false);
 
-        canvas { background: rgba(0,0,0,0.5); border: 2px solid #333; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+// Caso você queira testar no navegador do PC também:
+if (!window.cordova) {
+    window.onload = startNeonGridlock;
+}
 
-        .pieces-selector { display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; }
-        .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
-        .disabled { opacity: 0.2; filter: grayscale(1); }
-        
-        #start-screen, #game-over { 
-            position: fixed; inset: 0; background: rgba(2, 17, 26, 0.95); 
-            z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-        }
-        .btn { 
-            background: linear-gradient(45deg, #00ffff, #0080ff); color: #000; 
-            border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; 
-            border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,255,255,0.4);
-        }
-    </style>
-</head>
-<body>
-
-<div id="start-screen">
-    <h1 style="color:var(--main-color); letter-spacing:2px;">CIBER-TABULEIRO</h1>
-    <p id="menu-best">RECORDE: 0</p>
-    <button class="btn" onclick="initGame()">INICIAR JOGO</button>
-</div>
-
-<div id="ui-container">
-    <div class="score-panel">
-        <div id="info" style="font-size: 12px; opacity: 0.7;">NÍVEL 1</div>
-        <div class="stats-row">
-            <div>PONTOS: <span id="score" class="stat-val">0</span></div>
-            <div>RECORDE: <span id="best" class="stat-val">0</span></div>
-        </div>
-    </div>
-    <div id="mission-bar" style="margin-top: 5px; font-size: 18px;"></div>
-</div>
-
-<canvas id="gameCanvas" width="320" height="320"></canvas>
-
-<div class="pieces-selector">
-    <div id="slot0" class="slot"></div>
-    <div id="slot1" class="slot"></div>
-    <div id="slot2" class="slot"></div>
-</div>
-
-<div id="game-over" style="display:none;">
-    <h2 style="color:#ff4444;">FIM DE JOGO</h2>
-    <p id="final-score">Pontuação: 0</p>
-    <button class="btn" onclick="location.reload()">RECOMEÇAR</button>
-</div>
-
-<script>
+function startNeonGridlock() {
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const size = 40;
 
-    // --- CARREGAMENTO DE IMAGENS (Assets) ---
-    const imgBtn = new Image(); imgBtn.src = './assets/bloco.png';
-    const imgStar = new Image(); imgStar.src = './assets/estrela.png';
-    const imgFire = new Image(); imgFire.src = './assets/fogo.png';
-    const imgThunder = new Image(); imgThunder.src = './assets/raio.png';
+    // --- CARREGAMENTO DE IMAGENS (Caminhos corrigidos para Android 15) ---
+    const imgBtn = new Image(); imgBtn.src = 'assets/bloco.png';
+    const imgStar = new Image(); imgStar.src = 'assets/estrela.png';
+    const imgFire = new Image(); imgFire.src = 'assets/fogo.png';
+    const imgThunder = new Image(); imgThunder.src = 'assets/raio.png';
 
     const imgMap = { "⭐": imgStar, "🔥": imgFire, "⚡": imgThunder };
 
-    // Forçar atualização quando as imagens carregarem
+    // Atualiza a tela quando as imagens carregarem
     [imgBtn, imgStar, imgFire, imgThunder].forEach(img => {
-        img.onload = () => { renderUI(); };
+        img.onload = () => { if(typeof renderUI === "function") renderUI(); };
     });
 
     let grid = Array(8).fill().map(() => Array(8).fill(0));
     let score = 0, level = 1, best = localStorage.getItem('blockBest') || 0;
     let missionGoals = {}, missionCollected = {};
     let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = -1000, mY = -1000;
-    let particles = [], floatingItems = [], moved = false, touchT = 0, audioCtx;
+    let moved = false, touchT = 0;
 
     const icons = { star: "⭐", fire: "🔥", thunder: "⚡" };
     const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
@@ -101,12 +39,12 @@
     document.getElementById('best').innerText = best;
     document.getElementById('menu-best').innerText = "RECORDE: " + best;
 
-    function initGame() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Funções globais anexadas ao escopo para os botões do HTML funcionarem
+    window.initGame = function() {
         document.getElementById('start-screen').style.display = 'none';
         setupLevel();
         requestAnimationFrame(loop);
-    }
+    };
 
     function setupLevel() {
         missionGoals = {}; missionCollected = {};
@@ -124,13 +62,12 @@
         if (img.complete && img.naturalWidth !== 0) {
             ctx.drawImage(img, x, y, size - 1, size - 1);
         } else {
-            // Fallback: Quadrado azul se a imagem não carregar
-            ctx.fillStyle = "rgba(0, 255, 255, 0.3)";
-            ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
-            if(type && type.length < 3) {
-                ctx.fillStyle = "white"; ctx.font = "14px Arial";
-                ctx.fillText(type, x+10, y+25);
-            }
+            // Se a imagem falhar, desenha um bloco neon para o jogo não parar
+            ctx.fillStyle = "rgba(0, 255, 255, 0.4)";
+            ctx.strokeStyle = "#00ffff";
+            ctx.lineWidth = 2;
+            ctx.fillRect(x + 2, y + 2, size - 4, size - 4);
+            ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
         }
     }
 
@@ -178,15 +115,19 @@
         document.getElementById('info').innerText = `NÍVEL ${level}`;
         document.getElementById('score').innerText = score;
         const mBar = document.getElementById('mission-bar');
-        mBar.innerHTML = '';
-        for (let type in missionGoals) {
-            let done = missionCollected[type] >= missionGoals[type];
-            mBar.innerHTML += `<span style="margin:0 10px; opacity:${done?0.3:1}">${type} ${missionCollected[type]}/${missionGoals[type]}</span>`;
+        if(mBar) {
+            mBar.innerHTML = '';
+            for (let type in missionGoals) {
+                let done = missionCollected[type] >= missionGoals[type];
+                mBar.innerHTML += `<span style="margin:0 10px; opacity:${done?0.3:1}">${type} ${missionCollected[type]}/${missionGoals[type]}</span>`;
+            }
         }
         
         let moves = 0;
         for(let i=0; i<3; i++) {
-            const s = document.getElementById('slot'+i); s.innerHTML = '';
+            const s = document.getElementById('slot'+i); 
+            if(!s) continue;
+            s.innerHTML = '';
             if(!pieces[i]) continue;
             if(!canFitAnywhere(pieces[i])) s.classList.add('disabled'); else { s.classList.remove('disabled'); moves++; }
             
@@ -219,9 +160,8 @@
             score += (rd.length + cd.length) * 10; 
             if(score > best) { best = score; localStorage.setItem('blockBest', best); document.getElementById('best').innerText = best; }
         }
-        const rect = canvas.getBoundingClientRect();
-        rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c, rect); });
-        cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c, rect); });
+        rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
+        cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
         
         let allDone = true;
         for (let type in missionGoals) if (missionCollected[type] < missionGoals[type]) allDone = false;
@@ -229,30 +169,37 @@
         renderUI();
     }
 
-    function collect(r,c, rect) {
+    function collect(r,c) {
         let val = grid[r][c]; if(val === 0) return;
         if(missionGoals[val]) { missionCollected[val]++; }
         grid[r][c] = 0;
     }
 
+    // --- CONTROLES TOUCH (Ajustados para Mobile) ---
     window.addEventListener('touchstart', e => {
         const t = e.touches[0]; moved = false; touchT = Date.now();
         for(let i=0; i<3; i++) {
-            const r = document.getElementById('slot'+i).getBoundingClientRect();
+            const el = document.getElementById('slot'+i);
+            if(!el) continue;
+            const r = el.getBoundingClientRect();
             if(t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom) {
                 if(pieces[i]) { dragIdx = i; dragPiece = pieces[i]; mX = t.clientX; mY = t.clientY; }
             }
         }
-    });
+    }, {passive: false});
 
     window.addEventListener('touchmove', e => {
         if(dragIdx === -1) return; moved = true; mX = e.touches[0].clientX; mY = e.touches[0].clientY;
-        document.getElementById('slot'+dragIdx).style.opacity = '0.1';
-    });
+        const s = document.getElementById('slot'+dragIdx);
+        if(s) s.style.opacity = '0.1';
+    }, {passive: false});
 
     window.addEventListener('touchend', () => {
         if(dragIdx === -1) return;
-        if(!moved && Date.now()-touchT < 250) { pieces[dragIdx] = rotate(pieces[dragIdx]); renderUI(); }
+        if(!moved && Date.now()-touchT < 250) { 
+            pieces[dragIdx] = rotate(pieces[dragIdx]); 
+            renderUI(); 
+        }
         else if(moved) {
             const r = canvas.getBoundingClientRect();
             const col = Math.round((mX - r.left - (dragPiece[0].length*size/2))/size);
@@ -265,14 +212,17 @@
                 if(pieces.every(p => p === null)) newSet(); else renderUI();
             }
         }
-        document.getElementById('slot'+dragIdx).style.opacity = '1'; dragIdx = -1; dragPiece = null;
+        const s = document.getElementById('slot'+dragIdx);
+        if(s) s.style.opacity = '1'; 
+        dragIdx = -1; dragPiece = null;
     });
 
     function loop() {
         ctx.clearRect(0,0,320,320);
         for(let r=0; r<8; r++) {
             for(let c=0; c<8; c++) {
-                ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1, size-1);
+                ctx.fillStyle = "rgba(255,255,255,0.03)"; 
+                ctx.fillRect(c*size, r*size, size-1, size-1);
                 if(grid[r][c]) drawBlock(c*size, r*size, grid[r][c]);
             }
         }
@@ -286,6 +236,5 @@
         }
         requestAnimationFrame(loop);
     }
-</script>
-</body>
-</html>
+}
+
