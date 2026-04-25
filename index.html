@@ -10,7 +10,7 @@
             background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
             margin: 0; overflow: hidden; touch-action: none; height: 100vh;
-            justify-content: center; transition: background 0.1s;
+            justify-content: center; transition: background 1s ease;
         }
 
         body.flash { animation: screenFlash 0.15s; }
@@ -27,7 +27,7 @@
             margin: 0 auto; box-sizing: border-box;
         }
 
-     .game-canvas {
+    .game-canvas {
             width: 320px; height: 320px;
             margin-left: auto; margin-right: auto; display: block;
             background: rgba(0,0,0,0.5); border: 2px solid #333;
@@ -35,17 +35,17 @@
         }
 
         #ui-container { margin: 10px 0; text-align: center; width: 100%; z-index: 10; }
-     .score-panel {
+    .score-panel {
             background: rgba(0, 40, 60, 0.4); backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px;
             padding: 10px; margin: 5px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
         }
-     .stats-row { display: flex; justify-content: center; gap: 20px; }
-     .stat-val { color: var(--main-color); font-weight: bold; font-size: 18px; }
+    .stats-row { display: flex; justify-content: center; gap: 20px; }
+    .stat-val { color: var(--main-color); font-weight: bold; font-size: 18px; }
 
-     .pieces-selector { display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; justify-content: center; }
-     .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
-     .disabled { opacity: 0.2; filter: grayscale(1); }
+    .pieces-selector { display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; justify-content: center; }
+    .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; }
+    .disabled { opacity: 0.2; filter: grayscale(1); }
 
         #start-screen, #game-over {
             position: fixed; inset: 0; background: rgba(2, 17, 26, 0.95);
@@ -53,12 +53,11 @@
             overflow: hidden;
         }
 
-        /* BLOCOS CAINDO NA TELA INICIAL */
         #falling-blocks {
             position: absolute; inset: 0; z-index: 0;
             pointer-events: none;
         }
-       .falling-block {
+     .falling-block {
             position: absolute; width: 40px; height: 40px;
             opacity: 0.3; animation: fall linear infinite;
         }
@@ -73,7 +72,7 @@
             position: relative; z-index: 1; text-align: center;
         }
 
-     .btn {
+    .btn {
             background: linear-gradient(45deg, #00ffff, #0080ff); color: #000;
             border: none; padding: 15px 40px; font-size: 18px; font-weight: bold;
             border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,255,255,0.4);
@@ -163,9 +162,13 @@
     let comboTexts = [];
     let boardFlashTimer = 0;
     let flashTimer = 0;
-
-    // SISTEMA DE PARTÍCULAS PRA EXPLOSÃO
     let particles = [];
+
+    // CORES DE FUNDO SUTIS POR FASE
+    const levelColors = [
+        '#02111a', '#03121b', '#04131c', '#05141d', '#06151e',
+        '#07161f', '#081720', '#091821', '#0a1922', '#0b1a23'
+    ];
 
     const icons = { star: "⭐", fire: "🔥", thunder: "⚡" };
     const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
@@ -174,436 +177,5 @@
     document.getElementById('best').innerText = best;
     document.getElementById('menu-best').innerText = "RECORDE: " + best;
 
-    // CRIA BLOCOS CAINDO NA TELA INICIAL
     function createFallingBlocks() {
         const container = document.getElementById('falling-blocks');
-        const imgs = ['./assets/bloco.png', './assets/estrela.png', './assets/fogo.png', './assets/raio.png'];
-        for(let i = 0; i < 15; i++) {
-            const block = document.createElement('img');
-            block.className = 'falling-block';
-            block.src = imgs[Math.floor(Math.random() * imgs.length)];
-            block.style.left = Math.random() * 100 + '%';
-            block.style.animationDuration = (3 + Math.random() * 4) + 's';
-            block.style.animationDelay = Math.random() * 5 + 's';
-            container.appendChild(block);
-        }
-    }
-    createFallingBlocks();
-
-    function getComboColor() {
-        const colors = ["#00ff41", "#00ffff", "#ffff00", "#ff00ff", "#ff4400", "#0080ff"];
-        return colors[comboCount % colors.length];
-    }
-
-    // MÚSICA CHIPTUNE IGUAL DO SITE
-    function startBgMusic() {
-        if (!audioCtx || bgMusicLoop) return;
-        const gain = audioCtx.createGain();
-        gain.gain.value = 0.04;
-        gain.connect(audioCtx.destination);
-
-        // Melodia principal
-        const melody = [
-            196, 196, 247, 294, 247, 196, 196,
-            247, 247, 294, 330, 330, 294, 247, 247,
-            196, 196, 247, 294, 392, 392, 294, 247,
-            196, 196, 247, 294, 294, 247, 196, 196
-        ];
-        let idx = 0;
-
-        function playNote() {
-            if (!gain) return;
-            const osc = audioCtx.createOscillator();
-            osc.type = 'square';
-            osc.frequency.value = melody[idx];
-            osc.connect(gain);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
-            idx = (idx + 1) % melody.length;
-            bgMusicLoop = setTimeout(playNote, 180);
-        }
-        playNote();
-    }
-
-    function playSound(freq, duration, type = 'sine', vol = 0.1) {
-        if (!audioCtx) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.value = freq;
-        osc.type = type;
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.start(audioCtx.currentTime);
-        osc.stop(audioCtx.currentTime + duration);
-    }
-
-    // SOM DE EXPLOSÃO
-    function playExplosionSound() {
-        if (!audioCtx) return;
-        const noise = audioCtx.createBufferSource();
-        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for(let i = 0; i < data.length; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-        noise.buffer = buffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 800;
-        const gain = audioCtx.createGain();
-        gain.gain.value = 0.15;
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioCtx.destination);
-        noise.start();
-    }
-
-    function initGame() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        document.getElementById('start-screen').style.display = 'none';
-        startBgMusic();
-        setupLevel();
-        requestAnimationFrame(loop);
-    }
-
-    function setupLevel() {
-        missionGoals = {}; missionCollected = {};
-        missionGoals[icons.star] = 3 + Math.floor(level * 1.5);
-        if(level >= 3) missionGoals[icons.fire] = 2 + level;
-        for (let key in missionGoals) missionCollected[key] = 0;
-        grid = Array(8).fill().map(() => Array(8).fill(0));
-        newSet();
-    }
-
-    function showLevelComplete() {
-        const el = document.getElementById('level-complete');
-        const txt = document.getElementById('level-complete-text');
-        const stars = level <= 3? level : 3;
-        txt.innerText = `FASE CONCLUÍDA ${level}${'★'.repeat(stars)}`;
-        el.style.display = 'flex';
-        playSound(523, 0.2, 'square', 0.2);
-        setTimeout(() => { playSound(659, 0.2, 'square', 0.2); }, 200);
-        setTimeout(() => { playSound(784, 0.4, 'square', 0.2); }, 400);
-
-        setTimeout(() => {
-            el.style.display = 'none';
-            level++;
-            setupLevel();
-        }, 2000);
-    }
-
-    function drawBlock(x, y, type) {
-        let img = imgBtn;
-        if (type && typeof type === 'string' && imgMap[type]) img = imgMap[type];
-        if (img.complete && img.naturalWidth!== 0) {
-            ctx.drawImage(img, x, y, size - 1, size - 1);
-        } else {
-            ctx.fillStyle = "rgba(0, 255, 255, 0.3)";
-            ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
-            if(type && type.length < 3) {
-                ctx.fillStyle = "white"; ctx.font = "14px Arial";
-                ctx.fillText(type, x+10, y+25);
-            }
-        }
-    }
-
-    function rotate(p) { return p[0].map((_, i) => p.map(row => row[i]).reverse()); }
-
-    function canPlace(p, r, c) {
-        if (r < 0 || c < 0 || r + p.length > 8 || c + p[0].length > 8) return false;
-        for (let i = 0; i < p.length; i++)
-            for (let j = 0; j < p[0].length; j++)
-                if (p[i][j] && grid[r+i][c+j]!== 0) return false;
-        return true;
-    }
-
-    function canFitAnywhere(p) {
-        let cur = p;
-        for (let rot = 0; rot < 4; rot++) {
-            for (let r = 0; r <= 8 - cur.length; r++)
-                for (let c = 0; c <= 8 - cur[0].length; c++)
-                    if (canPlace(cur, r, c)) return true;
-            cur = rotate(cur);
-        }
-        return false;
-    }
-
-    function injectItems(piece) {
-        let types = Object.keys(missionGoals);
-        if (Math.random() < 0.4 && types.length > 0) {
-            let type = types[Math.floor(Math.random() * types.length)];
-            let coords = [];
-            piece.forEach((row, r) => row.forEach((v, c) => { if(v === 1) coords.push([r,c]); }));
-            if (coords.length > 0) {
-                let choice = coords[Math.floor(Math.random() * coords.length)];
-                piece[choice[0]][choice[1]] = type;
-            }
-        }
-        return piece;
-    }
-
-    function newSet() {
-        for(let i=0; i<3; i++) pieces[i] = injectItems(JSON.parse(JSON.stringify(shapes[Math.floor(Math.random()*shapes.length)])));
-        renderUI();
-    }
-
-    function renderUI() {
-        document.getElementById('info').innerText = `NÍVEL ${level}`;
-        document.getElementById('score').innerText = score;
-        document.getElementById('score').style.color = comboCount > 0? getComboColor() : "#00ffff";
-        const mBar = document.getElementById('mission-bar');
-        mBar.innerHTML = '';
-        for (let type in missionGoals) {
-            let done = missionCollected[type] >= missionGoals[type];
-            mBar.innerHTML += `<span style="margin:0 10px; opacity:${done?0.3:1}">${type} ${missionCollected[type]}/${missionGoals[type]}</span>`;
-        }
-
-        let moves = 0;
-        for(let i=0; i<3; i++) {
-            const s = document.getElementById('slot'+i); s.innerHTML = '';
-            if(!pieces[i]) continue;
-            if(!canFitAnywhere(pieces[i])) s.classList.add('disabled'); else { s.classList.remove('disabled'); moves++; }
-
-            const cvPiece = document.createElement('canvas');
-            cvPiece.width = pieces[i][0].length * 20; cvPiece.height = pieces[i].length * 20;
-            const cxP = cvPiece.getContext('2d');
-            pieces[i].forEach((row,r)=>row.forEach((v,c)=>{
-                if(v){
-                    let pImg = (typeof v === 'string')? imgMap[v] : imgBtn;
-                    if(pImg.complete) cxP.drawImage(pImg, c*20, r*20, 19, 19);
-                    else { cxP.fillStyle="#00ffff"; cxP.fillRect(c*20, r*20, 18, 18); }
-                }
-            }));
-            s.appendChild(cvPiece);
-        }
-        if (moves === 0 && pieces.some(p => p!== null)) {
-            if (bgMusicLoop) clearTimeout(bgMusicLoop);
-            playSound(150, 0.8, 'sawtooth', 0.1);
-            document.getElementById('game-over').style.display = 'flex';
-            document.getElementById('final-score').innerText = `Pontos: ${score}`;
-        }
-    }
-
-    function spawnComboText() {
-        const txt = comboPhrases[Math.min(comboCount - 1, comboPhrases.length - 1)];
-        comboTexts.push({
-            text: txt, x: 160, y: 120, alpha: 1, scale: 0.5, color: getComboColor()
-        });
-    }
-
-    // CRIA PARTÍCULAS DE EXPLOSÃO
-    function createExplosion(x, y) {
-        const color = getComboColor();
-        for(let i = 0; i < 20; i++) {
-            particles.push({
-                x: x * size + size/2,
-                y: y * size + size/2,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                life: 30,
-                color: color,
-                size: Math.random() * 4 + 2
-            });
-        }
-    }
-
-    function checkLines() {
-        let rd = [], cd = [];
-        for(let r=0; r<8; r++) if(grid[r].every(v => v!== 0)) rd.push(r);
-        for(let c=0; c<8; c++) {
-            let f = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) f = false;
-            if(f) cd.push(c);
-        }
-
-        if(rd.length || cd.length) {
-            comboCount++;
-            comboTimer = comboMaxTime;
-            boardFlashTimer = 8;
-            spawnComboText();
-
-            // EXPLOSÃO EM CADA BLOCO DA LINHA
-            rd.forEach(r => { for(let c=0; c<8; c++) createExplosion(c, r); });
-            cd.forEach(c => { for(let r=0; r<8; r++) createExplosion(c, r); });
-            playExplosionSound();
-
-            if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-            playSound(300 + (comboCount * 50), 0.2, 'square', 0.15);
-
-            if (comboCount >= 3) {
-                document.body.classList.add('flash');
-                flashTimer = 10;
-            }
-
-            score += (rd.length + cd.length) * 10 * comboCount;
-            if(score > best) { best = score; localStorage.setItem('blockBest', best); document.getElementById('best').innerText = best; }
-        } else {
-            comboCount = 0;
-        }
-
-        rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
-        cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
-
-        let allDone = true;
-        for (let type in missionGoals) if (missionCollected[type] < missionGoals[type]) allDone = false;
-        if (allDone && Object.keys(missionGoals).length > 0) {
-            showLevelComplete();
-            return;
-        }
-        renderUI();
-    }
-
-    function collect(r,c) {
-        let val = grid[r][c]; if(val === 0) return;
-        if(missionGoals[val]) { missionCollected[val]++; }
-        grid[r][c] = 0;
-    }
-
-    window.addEventListener('touchstart', e => {
-        const t = e.touches[0]; moved = false; touchT = Date.now();
-        for(let i=0; i<3; i++) {
-            const r = document.getElementById('slot'+i).getBoundingClientRect();
-            if(t.clientX > r.left && t.clientX < r.right && t.clientY > r.top && t.clientY < r.bottom) {
-                if(pieces[i]) { dragIdx = i; dragPiece = pieces[i]; mX = t.clientX; mY = t.clientY; }
-            }
-        }
-    });
-
-    window.addEventListener('touchmove', e => {
-        if(dragIdx === -1) return; moved = true; mX = e.touches[0].clientX; mY = e.touches[0].clientY;
-        document.getElementById('slot'+dragIdx).style.opacity = '0.1';
-    });
-
-    window.addEventListener('touchend', () => {
-        if(dragIdx === -1) return;
-        if(!moved && Date.now()-touchT < 250) { pieces[dragIdx] = rotate(pieces[dragIdx]); playSound(600, 0.1, 'sine'); renderUI(); }
-        else if(moved) {
-            const r = canvas.getBoundingClientRect();
-            const col = Math.round((mX - r.left - (dragPiece[0].length*size/2))/size);
-            const row = Math.round((mY - r.top - (dragPiece.length*size/2))/size);
-            if(canPlace(dragPiece, row, col)) {
-                playSound(400, 0.1, 'triangle', 0.05);
-                dragPiece.forEach((rd, i) => rd.forEach((v, j) => {
-                    if(v) grid[row+i][col+j] = v;
-                }));
-                pieces[dragIdx] = null; checkLines();
-                if(pieces.every(p => p === null)) newSet(); else renderUI();
-            } else {
-                playSound(100, 0.2, 'sawtooth', 0.1);
-            }
-        }
-        document.getElementById('slot'+dragIdx).style.opacity = '1'; dragIdx = -1; dragPiece = null;
-    });
-
-    function drawComboBorder() {
-        if (comboCount === 0 || comboTimer <= 0) {
-            canvas.style.borderColor = "#333";
-            canvas.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
-            return;
-        }
-
-        const progress = comboTimer / comboMaxTime;
-        const color = getComboColor();
-        const perimeter = 320 * 4;
-        const length = perimeter * progress;
-
-        canvas.style.borderColor = color;
-        canvas.style.boxShadow = `0 0 25px ${color}, inset 0 0 25px ${color}`;
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 6;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = color;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-
-        let remaining = length;
-        if (remaining > 0) { const drawLen = Math.min(remaining, 320); ctx.moveTo(0, 3); ctx.lineTo(drawLen, 3); remaining -= drawLen; }
-        if (remaining > 0) { const drawLen = Math.min(remaining, 320); ctx.moveTo(317, 0); ctx.lineTo(317, drawLen); remaining -= drawLen; }
-        if (remaining > 0) { const drawLen = Math.min(remaining, 320); ctx.moveTo(320, 317); ctx.lineTo(320 - drawLen, 317); remaining -= drawLen; }
-        if (remaining > 0) { const drawLen = Math.min(remaining, 320); ctx.moveTo(3, 320); ctx.lineTo(3, 320 - drawLen); }
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-    }
-
-    function loop() {
-        if (comboCount > 0) {
-            comboTimer--;
-            if (comboTimer <= 0) comboCount = 0;
-        }
-
-        if (flashTimer > 0) {
-            flashTimer--;
-            if (flashTimer === 0) document.body.classList.remove('flash');
-        }
-
-        ctx.clearRect(0,0,320,320);
-
-        if (boardFlashTimer > 0) {
-            boardFlashTimer--;
-            ctx.fillStyle = `rgba(255, 255, 255, ${boardFlashTimer * 0.05})`;
-            ctx.fillRect(0, 0, 320, 320);
-        }
-
-        for(let r=0; r<8; r++) {
-            for(let c=0; c<8; c++) {
-                ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1, size-1);
-                if(grid[r][c]) drawBlock(c*size, r*size, grid[r][c]);
-            }
-        }
-
-        // DESENHA PARTÍCULAS DE EXPLOSÃO
-        particles.forEach((p, i) => {
-            ctx.save();
-            ctx.globalAlpha = p.life / 30;
-            ctx.fillStyle = p.color;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.2;
-            p.life--;
-            if(p.life <= 0) particles.splice(i, 1);
-        });
-
-        comboTexts.forEach((ct, i) => {
-            ctx.save();
-            ctx.globalAlpha = ct.alpha;
-            ctx.fillStyle = ct.color;
-            ctx.font = `bold ${32 * ct.scale}px 'Segoe UI'`;
-            ctx.textAlign = "center";
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = ct.color;
-            ctx.fillText(ct.text, ct.x, ct.y);
-            ctx.restore();
-            ct.y -= 2;
-            ct.alpha -= 0.02;
-            ct.scale += 0.02;
-            if(ct.alpha <= 0) comboTexts.splice(i, 1);
-        });
-
-        if(dragPiece && moved) {
-            const r = canvas.getBoundingClientRect();
-            const x = mX - r.left - (dragPiece[0].length*size/2);
-            const y = mY - r.top - (dragPiece.length*size/2);
-            dragPiece.forEach((rd, i) => rd.forEach((v, j) => {
-                if(v) {
-                    ctx.globalAlpha = 0.7;
-                    drawBlock(x + j*size, y + i*size, v);
-                    ctx.globalAlpha = 1;
-                }
-            }));
-        }
-
-        drawComboBorder();
-        requestAnimationFrame(loop);
-    }
-</script>
-</body>
-</html>
