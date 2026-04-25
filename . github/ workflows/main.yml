@@ -1,1 +1,36 @@
+name: Build APK
 
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Build APK
+        run: |
+          npm i -g cordova@11
+          cordova create app com.neogridlock.game "Neon Gridlock"
+          cd app
+          rm -rf www/*
+          cp -r../assets www/
+          cp../index.html www/
+          cp../game.js www/
+          cp../style.css www/
+          cordova platform add android@13
+          cordova build android --release
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Neon-Gridlock-APK
+          path: app/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk
