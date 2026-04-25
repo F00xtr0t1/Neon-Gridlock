@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Neon Gridlock - F00XGAMES</title>
+    <title>Neon Gridlock Pro - F00XGAMES</title>
     <style>
         :root { 
             --main-color: #00ffff; 
@@ -15,37 +15,35 @@
             background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
             margin: 0; overflow: hidden; touch-action: none; height: 100vh;
-            justify-content: center;
+            justify-content: center; transition: background 1.5s ease-in-out;
         }
 
-        /* EFEITO NEON DA MARCA */
         .neon-brand {
             font-size: 18px; font-weight: bold; color: #fff; text-transform: uppercase;
-            letter-spacing: 4px; text-shadow: 0 0 5px #fff, 0 0 15px var(--main-color);
-            margin: 15px 0; animation: brandPulse 2s infinite alternate;
-            z-index: 10;
+            letter-spacing: 4px; text-shadow: 0 0 10px var(--main-color);
+            margin: 10px 0; animation: brandPulse 2s infinite alternate;
         }
         @keyframes brandPulse { 
             from { opacity: 0.6; transform: scale(0.95); } 
-            to { opacity: 1; transform: scale(1); text-shadow: 0 0 10px #fff, 0 0 25px var(--main-color); } 
+            to { opacity: 1; transform: scale(1); } 
         }
 
         #game-container {
             display: flex; flex-direction: column;
             background: var(--glass); backdrop-filter: blur(10px);
-            border-radius: 20px; padding: 15px; border: 1px solid rgba(0,255,255,0.1);
+            border-radius: 20px; padding: 15px; border: 1px solid rgba(0,255,255,0.2);
             width: 95%; max-width: 360px; box-sizing: border-box;
         }
 
         canvas {
             width: 310px; height: 310px; margin: 0 auto; display: block;
             background: rgba(0,0,0,0.6); border: 2px solid #333;
-            border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 12px; transition: border-color 0.3s;
         }
 
         .score-panel { text-align: center; margin-bottom: 10px; }
         .stats-row { display: flex; justify-content: center; gap: 30px; }
-        .stat-val { color: var(--main-color); font-weight: bold; font-size: 24px; text-shadow: 0 0 10px var(--main-color); }
+        .stat-val { color: var(--main-color); font-weight: bold; font-size: 24px; transition: color 0.3s; }
 
         .pieces-selector { 
             display: flex; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.4); 
@@ -71,18 +69,18 @@
 <body>
 
 <div id="start-screen">
-    <h1 style="color:var(--main-color); font-size: 36px; text-shadow: 0 0 20px var(--main-color);">NEON GRIDLOCK</h1>
+    <h1 style="color:var(--main-color); font-size: 36px; text-shadow: 0 0 20px var(--main-color); text-align: center;">NEON<br>GRIDLOCK</h1>
     <p id="menu-best">RECORDE: 0</p>
-    <button class="btn" onclick="initGame()">JOGAR</button>
+    <button class="btn" onclick="initGame()">INICIAR</button>
     <div class="neon-brand">F00XGAMES</div>
 </div>
 
 <div id="game-container">
     <div class="score-panel">
-        <div id="info" style="font-size: 12px; opacity: 0.6; letter-spacing: 2px;">FASE 1</div>
+        <div id="info" style="font-size: 11px; opacity: 0.6; letter-spacing: 2px;">SISTEMA INICIALIZADO</div>
         <div class="stats-row">
-            <div>PONTOS<br><span id="score" class="stat-val">0</span></div>
-            <div>RECORDE<br><span id="best" class="stat-val">0</span></div>
+            <div>SCORE<br><span id="score" class="stat-val">0</span></div>
+            <div>BEST<br><span id="best" class="stat-val">0</span></div>
         </div>
         <div id="mission-bar"></div>
     </div>
@@ -97,10 +95,10 @@
 </div>
 
 <div id="game-over" style="display:none;">
-    <h2 style="color:#ff4444; font-size: 40px;">FIM DE JOGO</h2>
+    <h2 style="color:#ff4444; font-size: 40px; text-shadow: 0 0 15px red;">GAME OVER</h2>
     <p id="final-score" style="font-size: 22px;"></p>
-    <button class="btn" onclick="location.reload()">RECORRER</button>
-    <div class="neon-brand">F00XGAMES</div>
+    <button class="btn" onclick="location.reload()">RECOMEÇAR</button>
+    <div class="neon-brand" style="margin-top: 30px;">F00XGAMES</div>
 </div>
 
 <script src="cordova.js"></script>
@@ -119,12 +117,23 @@
     let score = 0, level = 1, best = localStorage.getItem('blockBest') || 0;
     let missionGoals = {}, missionCollected = {};
     let pieces = [null, null, null], dragIdx = -1, dragPiece = null, mX = 0, mY = 0;
-    let moved = false, touchT = 0, particles = [], comboCount = 0, shakeIntensity = 0;
+    let moved = false, touchT = 0, particles = [], comboTexts = [];
+    
+    // SISTEMA DE COMBO
+    let comboCount = 0, comboTimer = 0;
+    const comboMaxTime = 600; 
+    let shakeIntensity = 0;
 
     const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[1]]];
+    const comboPhrases = ["BOM!", "ENERGIA!", "TURBO!", "INCRÍVEL!", "LENDÁRIO!", "DEUS!"];
 
     document.getElementById('best').innerText = best;
     document.getElementById('menu-best').innerText = "RECORDE: " + best;
+
+    function getComboColor() {
+        if (comboCount === 0) return "#00ffff";
+        return `hsl(${(comboCount * 60) % 360}, 100%, 60%)`;
+    }
 
     function initGame() {
         document.getElementById('start-screen').style.display = 'none';
@@ -134,9 +143,17 @@
 
     function setupLevel() {
         grid = Array(8).fill().map(() => Array(8).fill(0));
-        missionGoals = { "⭐": 3 + level };
-        if(level >= 3) missionGoals["🔥"] = 2 + level;
+        missionGoals = { "⭐": 5 + (level * 2) };
+        if(level >= 2) missionGoals["🔥"] = 3 + level;
+        if(level >= 4) missionGoals["⚡"] = 2 + level;
+        
         for (let k in missionGoals) missionCollected[k] = 0;
+        
+        // MUDA O FUNDO POR FASE
+        const hues = [190, 280, 210, 140, 40, 0];
+        const currentHue = hues[(level - 1) % hues.length];
+        document.body.style.background = `radial-gradient(circle at center, hsl(${currentHue}, 60%, 8%) 0%, #01080d 100%)`;
+        
         document.getElementById('info').innerText = "FASE " + level;
         newSet();
     }
@@ -145,9 +162,8 @@
         const types = Object.keys(missionGoals);
         for(let i=0; i<3; i++) {
             let p = JSON.parse(JSON.stringify(shapes[Math.floor(Math.random()*shapes.length)]));
-            if(Math.random() < 0.4) {
-                let r = Math.floor(Math.random()*p.length);
-                let c = Math.floor(Math.random()*p[0].length);
+            if(Math.random() < 0.45) {
+                let r = Math.floor(Math.random()*p.length), c = Math.floor(Math.random()*p[0].length);
                 if(p[r][c]) p[r][c] = types[Math.floor(Math.random()*types.length)];
             }
             pieces[i] = p;
@@ -158,37 +174,33 @@
     function drawBlock(x, y, type, alpha = 1) {
         ctx.globalAlpha = alpha;
         let img = (typeof type === 'string' && imgMap[type]) ? imgMap[type] : imgBtn;
+        
+        // Efeito de brilho se for combo
+        if(comboCount > 0) {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = getComboColor();
+        }
+
         if(img.complete) ctx.drawImage(img, x, y, size-1, size-1);
-        else { ctx.fillStyle = "cyan"; ctx.fillRect(x+1, y+1, size-2, size-2); }
+        else { ctx.fillStyle = getComboColor(); ctx.fillRect(x+1, y+1, size-2, size-2); }
+        
+        ctx.shadowBlur = 0;
         ctx.globalAlpha = 1;
-    }
-
-    function canPlace(p, r, c) {
-        if (r < 0 || c < 0 || r + p.length > 8 || c + p[0].length > 8) return false;
-        for (let i = 0; i < p.length; i++) 
-            for (let j = 0; j < p[0].length; j++) 
-                if (p[i][j] && grid[r+i][c+j] !== 0) return false;
-        return true;
-    }
-
-    function canFit(p) {
-        if(!p) return true;
-        for (let r = 0; r <= 8 - p.length; r++)
-            for (let c = 0; c <= 8 - p[0].length; c++)
-                if (canPlace(p, r, c)) return true;
-        return false;
     }
 
     function renderUI() {
         document.getElementById('score').innerText = score;
+        document.getElementById('score').style.color = getComboColor();
         const bar = document.getElementById('mission-bar');
         bar.innerHTML = '';
-        for(let k in missionGoals) bar.innerHTML += `<span style="margin:0 10px">${k} ${missionCollected[k]}/${missionGoals[k]}</span>`;
+        for(let k in missionGoals) {
+            let isDone = missionCollected[k] >= missionGoals[k];
+            bar.innerHTML += `<span style="margin:0 10px; opacity:${isDone?0.3:1}">${k} ${missionCollected[k]}/${missionGoals[k]}</span>`;
+        }
         
         for(let i=0; i<3; i++) {
             const slot = document.getElementById('slot'+i); slot.innerHTML = '';
             if(!pieces[i]) continue;
-            if(!canFit(pieces[i])) slot.classList.add('disabled'); else slot.classList.remove('disabled');
             const cv = document.createElement('canvas'); cv.width = 60; cv.height = 60;
             const cx = cv.getContext('2d');
             pieces[i].forEach((row,r) => row.forEach((v,c) => {
@@ -223,7 +235,7 @@
         } else if(moved) {
             const r = canvas.getBoundingClientRect();
             const col = Math.round((mX - r.left - (dragPiece[0].length*size/2))/size);
-            const row = Math.round((mY - r.top - (dragPiece.length*size/2) - 60)/size);
+            const row = Math.round((mY - r.top - (dragPiece.length*size/2) - 70)/size); // Offset para ver a peça
             if(canPlace(dragPiece, row, col)) {
                 dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) grid[row+i][col+j] = v; }));
                 pieces[dragIdx] = null;
@@ -239,17 +251,35 @@
         }
     });
 
+    function canPlace(p, r, c) {
+        if (r < 0 || c < 0 || r + p.length > 8 || c + p[0].length > 8) return false;
+        for (let i = 0; i < p.length; i++) for (let j = 0; j < p[0].length; j++) if (p[i][j] && grid[r+i][c+j] !== 0) return false;
+        return true;
+    }
+
+    function canFit(p) {
+        if(!p) return true;
+        for (let r = 0; r <= 8 - p.length; r++) for (let c = 0; c <= 8 - p[0].length; c++) if (canPlace(p, r, c)) return true;
+        return false;
+    }
+
     function checkLines() {
         let rd = [], cd = [];
         for(let r=0; r<8; r++) if(grid[r].every(v => v !== 0)) rd.push(r);
         for(let c=0; c<8; c++) { let f = true; for(let r=0; r<8; r++) if(grid[r][c] === 0) f = false; if(f) cd.push(c); }
         
         if(rd.length || cd.length) {
-            shakeIntensity = 8;
+            comboCount++; comboTimer = comboMaxTime;
+            shakeIntensity = 10;
             if(navigator.vibrate) navigator.vibrate([60, 40, 60]);
+            
+            let phrase = comboPhrases[Math.min(comboCount-1, comboPhrases.length-1)];
+            comboTexts.push({text: phrase, x: 160, y: 140, life: 1, color: getComboColor()});
+
             rd.forEach(r => { for(let c=0; c<8; c++) collect(r,c); });
             cd.forEach(c => { for(let r=0; r<8; r++) collect(r,c); });
-            score += (rd.length + cd.length) * 10;
+            
+            score += (rd.length + cd.length) * 10 * comboCount;
             if(score > best) { best = score; localStorage.setItem('blockBest', best); }
         }
 
@@ -262,28 +292,67 @@
         let v = grid[r][c];
         if(missionGoals[v] && missionCollected[v] < missionGoals[v]) missionCollected[v]++;
         grid[r][c] = 0;
-        for(let i=0; i<4; i++) particles.push({x: c*size+20, y: r*size+20, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 1});
+        let color = getComboColor();
+        for(let i=0; i<6; i++) particles.push({x: c*size+20, y: r*size+20, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color: color});
     }
 
     function loop() {
+        if(comboTimer > 0) {
+            comboTimer--;
+            canvas.style.borderColor = getComboColor();
+        } else {
+            comboCount = 0;
+            canvas.style.borderColor = "#333";
+        }
+
         ctx.save();
-        if(shakeIntensity > 0) { ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); shakeIntensity *= 0.9; }
+        if(shakeIntensity > 0) { 
+            ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity); 
+            shakeIntensity *= 0.9; 
+        }
+        
         ctx.clearRect(0,0,320,320);
+        
+        // Fundo do Grid
         for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
             ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(c*size, r*size, size-1, size-1);
             if(grid[r][c]) drawBlock(c*size, r*size, grid[r][c]);
         }
+
+        // Barra de Combo Visual
+        if(comboTimer > 0) {
+            ctx.fillStyle = getComboColor();
+            let width = (comboTimer / comboMaxTime) * 320;
+            ctx.fillRect(0, 0, width, 3);
+        }
+
+        // Peça sendo arrastada
         if(dragIdx !== -1 && moved) {
             const r = canvas.getBoundingClientRect();
             let dx = mX - r.left - (dragPiece[0].length*size/2);
-            let dy = mY - r.top - (dragPiece.length*size/2) - 60;
+            let dy = mY - r.top - (dragPiece.length*size/2) - 70;
             dragPiece.forEach((rd, i) => rd.forEach((v, j) => { if(v) drawBlock(dx+j*size, dy+i*size, v, 0.6); }));
         }
+
+        // Partículas
         particles.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.life -= 0.03;
-            ctx.fillStyle = `rgba(0, 255, 255, ${p.life})`; ctx.fillRect(p.x, p.y, 3, 3);
+            p.x += p.vx; p.y += p.vy; p.life -= 0.025;
+            ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+            ctx.fillRect(p.x, p.y, 3, 3);
             if(p.life <= 0) particles.splice(i, 1);
         });
+        ctx.globalAlpha = 1;
+
+        // Textos de Combo
+        comboTexts.forEach((ct, i) => {
+            ct.y -= 0.8; ct.life -= 0.015;
+            ctx.fillStyle = ct.color; ctx.globalAlpha = ct.life;
+            ctx.font = "bold 24px Arial"; ctx.textAlign = "center";
+            ctx.fillText(ct.text, ct.x, ct.y);
+            if(ct.life <= 0) comboTexts.splice(i, 1);
+        });
+        ctx.globalAlpha = 1;
+
         ctx.restore();
         requestAnimationFrame(loop);
     }
