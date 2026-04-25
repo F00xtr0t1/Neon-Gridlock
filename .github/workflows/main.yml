@@ -1,59 +1,46 @@
-name: Build APK de Teste
-on:
-  push:
-    branches: [ main ]
+name: Build APK
+
+on: [push]
 
 jobs:
-  android-build:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
+          node-version: '20'
+          
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
           
-      - name: Install Cordova
-        run: npm install -g cordova@latest
-
-      - name: Create Project
+      - name: Build APK
         run: |
-          cordova create build com.neogridlock.myapp "Neon Gridlock"
-          cd build
+          npm i -g cordova@latest
+          cordova create app com.neogridlock.game "Neon Gridlock"
+          cd app
+          # Adicionando a plataforma 14 para suportar API 35
           cordova platform add android@14.0.0
-          cp -r ../* www/ || true
-          rm -rf www/build
           
-          # Correções de caminho e ordem do Cordova
+          # Copiando seus arquivos (com espaços corretos entre os pontos)
+          cp -r ../* www/ || true
+          
+          # Ajustes automáticos para evitar tela branca/preta
           sed -i 's/src=".\/game.js"/src="game.js"/g' www/index.html
           sed -i 's/href=".\/style.css"/href="style.css"/g' www/index.html
           sed -i '/<head>/a \    <script src="cordova.js"></script>' www/index.html
-
-          sed -i 's/version="1.0.0"/version="4.0.0"/' config.xml
-          sed -i 's/android-versionCode="1"/android-versionCode="22000"/' config.xml
           
-      - name: Config Anti-Tela-Branca
-        run: |
-          cd build
+          # Forçando a API 35 no config.xml
+          sed -i '/<\/widget>/i \    <preference name="android-targetSdkVersion" value="35" />' config.xml
           sed -i '/<\/widget>/i \    <preference name="Scheme" value="https" />' config.xml
           sed -i '/<\/widget>/i \    <preference name="Hostname" value="localhost" />' config.xml
-          sed -i '/<\/widget>/i \    <preference name="android-targetSdkVersion" value="35" />' config.xml
-
-      - name: Build APK
-        run: |
-          cd build
+          
           cordova build android --release -- --packageType=apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          
+      - uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: build/platforms/android/app/build/outputs/apk/release/*.apk
+          name: Neon-Gridlock-APK
+          path: app/platforms/android/app/build/outputs/apk/release/*.apk
